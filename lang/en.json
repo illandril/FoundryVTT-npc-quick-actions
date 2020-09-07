@@ -1,0 +1,11 @@
+{
+  "illandril-npc-quick-actions.activation_action": "Actions",
+  "illandril-npc-quick-actions.activation_bonus": "Bonus Actions",
+  "illandril-npc-quick-actions.activation_reaction": "Reactions",
+  "illandril-npc-quick-actions.activation_legendary": "Legendary Actions",
+  "illandril-npc-quick-actions.activation_lair": "Lair Actions",
+  "illandril-npc-quick-actions.activation_special": "Special Actions",
+  "illandril-npc-quick-actions.activation_crew": "Crew Actions",
+  "illandril-npc-quick-actions.activation_new-turn": "Start of Turn",
+  "illandril-npc-quick-actions.reset-for-new-turn": "Reset Actions for New Turn"
+}
