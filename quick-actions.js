@@ -167,7 +167,11 @@ function getAction(actor, item) {
   let newTurnReset = null;
   let uses = ItemSystem.calculateUsesForItem(item);
   if (uses !== null) {
-    name = name + ' (' + uses + ')';
+    if(uses.maximum) {
+      name = `${name} (${uses.available} / ${uses.maximum})`;
+    } else {
+      name = `${name} (${uses.available})`;
+    }
 
     const recharge = item.data.type === 'feat' ? item.data.data.recharge : null;
     if (recharge && recharge.value && !recharge.charged) {

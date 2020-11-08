@@ -26,7 +26,7 @@ export const hide = () => {
 
 export const show = (token) => {
   hide();
-  if(!token) {
+  if (!token) {
     return;
   }
   const actor = token.actor;
@@ -55,14 +55,26 @@ export const show = (token) => {
 
   const lrOffset = 200;
   const tokenWidth = token.w * canvas.stage.scale.x;
-  const leftOffset = Math.floor(token.worldTransform.tx - lrOffset)
+  const leftOffset = Math.floor(token.worldTransform.tx - lrOffset);
   const rightOffset = Math.ceil(token.worldTransform.tx + tokenWidth + lrOffset);
-  const bottomOffset = canvas.tokens.hud.element.children().offset().top - 6;
+  const bottomOffset = getTokenHUDTop() - 6;
   actionsOuterContainer.style.left = leftOffset + 'px';
   actionsOuterContainer.style.right = 'calc(100% - ' + rightOffset + 'px)';
   actionsOuterContainer.style.bottom = 'calc(100% - ' + bottomOffset + 'px)';
   actionsOuterContainer.classList.add(CSS_ACTIVE);
 };
+
+function getTokenHUDTop() {
+  // Why not just get the offset().top of the token HUD element, or the columns?
+  // Because the columns flow outside the HUD element, and often have lots of empty space in them
+  const tokenHUDColumns = canvas.tokens.hud.element.children();
+  const tokenHUDElements = tokenHUDColumns.children();
+  let bestTop = 99999;
+  Array.prototype.forEach.call(tokenHUDElements, (child) => {
+    bestTop = Math.min(bestTop, $(child).offset().top);
+  });
+  return bestTop;
+}
 
 function getActionRow(action) {
   const row = document.createElement('div');
