@@ -1,12 +1,12 @@
 {
   "type": "module",
   "name": "illandril-npc-quick-actions",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "title": "Illandril's NPC Quick Actions (5e)",
   "description": "Shows a hotbar for actions a selected NPC can perform for GMs (currently only compatible with the DnD5e system).",
   "author": "Joe Spandrusyszyn",
   "minimumCoreVersion": "0.7.6",
-  "compatibleCoreVersion": "0.7.6",
+  "compatibleCoreVersion": "0.7.9",
   "styles": ["./styles.css"],
   "esmodules": ["./init.js"],
   "languages": [{ "lang": "en", "name": "English", "path": "lang/en.json" }],
@@ -15,5 +15,5 @@
   "bugs": "https://github.com/illandril/FoundryVTT-npc-quick-actions/issues",
   "changelog": "https://github.com/illandril/FoundryVTT-npc-quick-actions/blob/master/CHANGELOG.md",
   "manifest": "https://github.com/illandril/FoundryVTT-npc-quick-actions/releases/latest/download/module.json",
-  "download": "https://github.com/illandril/FoundryVTT-npc-quick-actions/releases/download/v1.0.0/illandril-npc-quick-actions.zip"
+  "download": "https://github.com/illandril/FoundryVTT-npc-quick-actions/releases/download/v1.0.1/illandril-npc-quick-actions.zip"
 }
