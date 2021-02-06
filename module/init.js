@@ -22,11 +22,9 @@ Hooks.on('updateOwnedItem', (actor) => {
   }
 });
 
-
-
 Hooks.on('renderTokenHUD', (tokenHUD) => {
   const token = tokenHUD.object;
-  if (game.user.isGM && token.actor.data.type === 'npc') {
+  if (game.user.isGM) {
     UI.show(token);
     shownToken = token;
   }

@@ -1,7 +1,7 @@
 {
   "name": "illandril-npc-quick-actions",
   "title": "Illandril's NPC Quick Actions (5e)",
-  "description": "Shows a hotbar for actions a selected NPC can perform for GMs (currently only compatible with the DnD5e system).",
+  "description": "Shows a quick actions list when right-clicking a token as a GM (currently only compatible with the DnD5e system).",
   "version": "1.0.1",
   "library": "false",
   "manifestPlusVersion": "1.0.0",
