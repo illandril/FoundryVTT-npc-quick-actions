@@ -2,7 +2,7 @@
     "name": "illandril-npc-quick-actions",
     "title": "Illandril's Token Quick Actions (5e)",
     "description": "Shows a \"quick actions\" menu when right-clicking a token, showing the actions available to that token during combat (currently only compatible with the DnD5e system).",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "library": "false",
     "manifestPlusVersion": "1.0.0",
     "minimumCoreVersion": "0.7.6",
@@ -38,7 +38,7 @@
     "bugs": "https://github.com/illandril/FoundryVTT-npc-quick-actions/issues",
     "changelog": "https://github.com/illandril/FoundryVTT-npc-quick-actions/blob/master/CHANGELOG.md",
     "manifest": "https://github.com/illandril/FoundryVTT-npc-quick-actions/releases/latest/download/module.json",
-    "download": "https://github.com/illandril/FoundryVTT-npc-quick-actions/releases/download/v1.2.0/module.zip",
+    "download": "https://github.com/illandril/FoundryVTT-npc-quick-actions/releases/download/v1.2.1/module.zip",
     "media": [
         {
             "type": "screenshot",
