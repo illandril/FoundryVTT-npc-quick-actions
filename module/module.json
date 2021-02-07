@@ -21,7 +21,7 @@
     "dependencies": [],
     "conflicts": [],
     "esmodules": [
-        "./init.js"
+        "./scripts/index.js"
     ],
     "styles": [
         "./styles.css"
