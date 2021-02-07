@@ -1,4 +1,17 @@
 {
+  "illandril-npc-quick-actions.setting.minimumRole.label": "Minimum Role for Quick Actions",
+  "illandril-npc-quick-actions.setting.minimumRole.hint": "The Quick Actions menu will show when right-clicking on tokens owned by the user if they have the selected Role or greater. Note: GMs \"own\" every token.",
+  "illandril-npc-quick-actions.setting.showUnpreparedNPCSpells.label": "Show Unprepared NPC Spells",
+  "illandril-npc-quick-actions.setting.showUnpreparedNPCSpells.hint": "If checked, spells that have the \"Prepared\" Spell Preparation Mode that are not marked as \"Prepared\" will be shown in the Quick Actions menu for \"Player Character\" type actors without a player owner. (Note: these spells will appear in the Quck Actions menu for \"Non-Player Character\" type actors regardless of if they have a player owner or not and regardless of this setting.)",
+  "illandril-npc-quick-actions.setting.showUnpreparedPCSpells.label": "Show Unprepared PC Spells",
+  "illandril-npc-quick-actions.setting.showUnpreparedPCSpells.hint": "If checked, spells that have the \"Prepared\" Spell Preparation Mode that are not marked as \"Prepared\" will be shown in the Quick Actions menu for \"Player Character\" type actors with a player owner.",
+  "illandril-npc-quick-actions.setting.showUnequippedNPCItems.label": "Show Unequipped NPC Items",
+  "illandril-npc-quick-actions.setting.showUnequippedNPCItems.hint": "If checked, items that are not not marked as \"Equipped\" will be shown in the Quick Actions menu for \"Player Character\" type actors without a player owner. (Note: these items will appear in the Quck Actions menu for \"Non-Player Character\" type actors regardless of if they have a player owner or not and regardless of this setting.)",
+  "illandril-npc-quick-actions.setting.showUnequippedPCItems.label": "Show Unequipped PC Items",
+  "illandril-npc-quick-actions.setting.showUnequippedPCItems.hint": "If checked, items that are not not marked as \"Equipped\" will be shown in the Quick Actions menu for \"Player Character\" type actors with a player owner.",
+  "illandril-npc-quick-actions.setting.showZeroUsesRemainActions.label": "Show Actions with Zero Uses Left",
+  "illandril-npc-quick-actions.setting.showZeroUsesRemainActions.hint": "If checked, actions that have zero uses remaining will be shown in the Quick Actions menu.",
+
   "illandril-npc-quick-actions.activation_action": "Actions",
   "illandril-npc-quick-actions.activation_bonus": "Bonus Actions",
   "illandril-npc-quick-actions.activation_reaction": "Reactions",

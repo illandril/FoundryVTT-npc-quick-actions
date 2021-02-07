@@ -1,7 +1,7 @@
 {
   "name": "illandril-npc-quick-actions",
-  "title": "Illandril's NPC Quick Actions (5e)",
-  "description": "Shows a quick actions list when right-clicking a token as a GM (currently only compatible with the DnD5e system).",
+  "title": "Illandril's Token Quick Actions (5e)",
+  "description": "Shows a \"quick actions\" menu when right-clicking a token, showing the actions available to that token during combat (currently only compatible with the DnD5e system).",
   "version": "1.0.1",
   "library": "false",
   "manifestPlusVersion": "1.0.0",
@@ -20,7 +20,7 @@
   ],
   "dependencies": [],
   "conflicts": [],
-  "esmodules": ["./init.js"],
+  "esmodules": ["./scripts/index.js"],
   "styles": ["./styles.css"],
   "languages": [
     {

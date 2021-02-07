@@ -1,3 +1,4 @@
+import Settings from './settings.js';
 import * as ItemSystem from './item-system/index.js';
 
 function caseInsensitiveCompare(a, b) {
@@ -17,8 +18,11 @@ const ACTIVATION_CATEGORY = {
 
 const TYPE_CATEGORY = {
   WEAPON: { sort: 1 },
-  FEATURE: { sort: 2 },
-  SPELL: { sort: 3 },
+  EQUIPMENT: { sort: 2 },
+  CONSUMABLE: { sort: 3 },
+  OTHER: { sort: 4 },
+  FEATURE: { sort: 5 },
+  SPELL: { sort: 6 },
 };
 
 export const get = (actor) => {
@@ -115,7 +119,8 @@ function getAction(actor, item) {
 
   let subcategory = 0;
   let typeCategory;
-  switch (item.data.type) {
+  const itemType = item.data.type;
+  switch (itemType) {
     case 'feat':
       typeCategory = TYPE_CATEGORY.FEATURE;
       break;
@@ -126,12 +131,24 @@ function getAction(actor, item) {
       const preparationMode = (spellData.preparation && spellData.preparation.mode) || 'prepared';
       switch (preparationMode) {
         case 'pact':
-        // TODO: Localize
+          // TODO: Localize
           name = '[P] ' + name;
           subcategory = 0.5;
           break;
-        case 'always':
         case 'prepared':
+          if (actor.data.type !== 'npc' && !spellData.preparation.prepared) {
+            if (actor.hasPlayerOwner) {
+              if (!Settings.ShowUnpreparedPCSpells.get()) {
+                return null;
+              }
+            } else {
+              if (!Settings.ShowUnpreparedNPCSpells.get()) {
+                return null;
+              }
+            }
+          }
+        // No break
+        case 'always':
           subcategory = spellData.level;
           if (spellData.level === 0) {
             // TODO: Localize
@@ -156,18 +173,34 @@ function getAction(actor, item) {
           break;
       }
       break;
-    case 'weapon':
-      typeCategory = TYPE_CATEGORY.WEAPON;
-      break;
     default:
-      console.log('Unsupported type: ' + item.data.type);
-      return null;
+      if (itemType === 'weapon') {
+        typeCategory = TYPE_CATEGORY.WEAPON;
+      } else if (itemType === 'equipment') {
+        typeCategory = TYPE_CATEGORY.EQUIPMENT;
+      } else if (itemType === 'consumable') {
+        typeCategory = TYPE_CATEGORY.CONSUMABLE;
+      } else {
+        typeCategory = TYPE_CATEGORY.OTHER;
+      }
+      if (actor.data.type !== 'npc' && !getProperty(item, 'data.data.equipped')) {
+        if (actor.hasPlayerOwner) {
+          if (!Settings.ShowUnequippedPCItems.get()) {
+            return null;
+          }
+        } else {
+          if (!Settings.ShowUnequippedNPCItems.get()) {
+            return null;
+          }
+        }
+      }
+      break;
   }
 
   let newTurnReset = null;
   let uses = ItemSystem.calculateUsesForItem(item);
-  if (uses !== null) {
-    if(uses.maximum) {
+  if (uses) {
+    if (uses.maximum) {
       name = `${name} (${uses.available} / ${uses.maximum})`;
     } else {
       name = `${name} (${uses.available})`;
@@ -190,10 +223,9 @@ function getAction(actor, item) {
         }
         resetRoll.toMessage({ flavor, speaker: ChatMessage.getSpeaker({ actor }) });
       };
+    } else if (uses.available === 0 && !Settings.ShowZeroUsesRemainActions.get()) {
+      return null;
     }
-  }
-  if (uses === 0 && newTurnReset === null) {
-    return null;
   }
   return {
     roll,

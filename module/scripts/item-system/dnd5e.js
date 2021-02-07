@@ -13,7 +13,9 @@ export const calculateUsesForItem = (item) => {
   if (itemType === 'feat') {
     return calculateFeatUses(itemData);
   } else if (itemType === 'consumable') {
-    return itemData.quantity;
+    return {
+      available: itemData.quantity,
+    };
   } else if (itemType === 'spell') {
     return calculateSpellUses(item);
   } else if (itemType === 'weapon') {
