@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.2.2](https://github.com/illandril/FoundryVTT-npc-quick-actions/tree/v1.2.2) (2021-02-18)
+
+[Full Changelog](https://github.com/illandril/FoundryVTT-npc-quick-actions/compare/v1.2.1...v1.2.2)
+
+**Enhancements**
+
+- Add support for Bug Reporter [\#6](https://github.com/illandril/FoundryVTT-npc-quick-actions/issues/6)
+
 ## [v1.2.1](https://github.com/illandril/FoundryVTT-npc-quick-actions/tree/v1.2.1) (2021-02-07)
 
 [Full Changelog](https://github.com/illandril/FoundryVTT-npc-quick-actions/compare/v1.2.0...v1.2.1)
