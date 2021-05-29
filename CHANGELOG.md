@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.3.0](https://github.com/illandril/FoundryVTT-npc-quick-actions/tree/v1.3.0) (2021-05-29)
+
+[Full Changelog](https://github.com/illandril/FoundryVTT-npc-quick-actions/compare/v1.2.2...v1.3.0)
+
+**Other&nbsp;Changes**
+
+- Support Foundry 0.8.x [\#9](https://github.com/illandril/FoundryVTT-npc-quick-actions/issues/9)
+
 ## [v1.2.2](https://github.com/illandril/FoundryVTT-npc-quick-actions/tree/v1.2.2) (2021-02-18)
 
 [Full Changelog](https://github.com/illandril/FoundryVTT-npc-quick-actions/compare/v1.2.1...v1.2.2)
