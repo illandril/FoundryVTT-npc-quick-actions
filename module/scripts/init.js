@@ -11,15 +11,23 @@ Hooks.on('init', () => {
   };
 });
 
-Hooks.on('updateToken', (scene, tokenData) => {
-  if (shownToken && shownToken.id === tokenData._id) {
+Hooks.on('updateToken', (token) => {
+  if (shownToken && shownToken.id === token.id) {
     setTimeout(() => {
       UI.show(shownToken);
     }, 1);
   }
 });
 
-Hooks.on('updateOwnedItem', (actor) => {
+Hooks.on('updatItem', (item) => {
+  if (shownToken && shownToken.actor === item.parent) {
+    setTimeout(() => {
+      UI.show(shownToken);
+    }, 1);
+  }
+});
+
+Hooks.on('updateActor', (actor) => {
   if (shownToken && shownToken.actor === actor) {
     setTimeout(() => {
       UI.show(shownToken);

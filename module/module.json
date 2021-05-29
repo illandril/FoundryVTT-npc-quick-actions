@@ -4,16 +4,18 @@
     "description": "Shows a \"quick actions\" menu when right-clicking a token, showing the actions available to that token during combat (currently only compatible with the DnD5e system).",
     "version": "1.2.2",
     "library": "false",
-    "manifestPlusVersion": "1.0.0",
-    "minimumCoreVersion": "0.7.6",
-    "compatibleCoreVersion": "0.7.9",
+    "manifestPlusVersion": "1.2.0",
+    "minimumCoreVersion": "0.8.5",
+    "compatibleCoreVersion": "0.8.5",
     "type": "module",
+    "author": "Joe Spandrusyszyn (illandril)",
     "authors": [
         {
             "name": "Joe Spandrusyszyn (illandril)",
             "url": "https://github.com/illandril",
             "email": "foundry-modules@illandril.net",
             "discord": "joespan#3152",
+            "ko-fi": "illandril",
             "patreon": "illandril",
             "reddit": "u/illandril"
         }
