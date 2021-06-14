@@ -52,11 +52,11 @@ Hooks.on('renderTokenHUD', (tokenHUD, tokenHUDElem, data) => {
       //if the box is visible, we dont need to transform it downward
       el[0].style.removeProperty('transform');
   }
-  //check again in case we just accidentally moved it off of the screen by removing the transform
+  //check again in case we just moved it off of the screen by removing the transform
   rect = el[0].getBoundingClientRect();
   viewable = rect.top >= 0;
   if (!viewable) {
-      //if the box is going off the top of the scree, move it down relative to the tokenHUD element so that it appears underneath instead.
+      //if the box is going off the top of the screen, move it down relative to the tokenHUD element so that it appears underneath instead.
       let offset = tokenHUDElem[0].style.height.split(/(\d+)/)[1] * 2;
       let unit = tokenHUDElem[0].style.height.split(/(\d+)/)[2];
       el.css('transform', 'translateY(calc(100% + ' + offset + unit + '))');
