@@ -42,24 +42,24 @@ Hooks.on('renderTokenHUD', (tokenHUD, tokenHUDElem, data) => {
     shownToken = token;
 
     // get the action container
-    const el = $(".illandril-npc-quick-actions--outer-container.illandril-npc-quick-actions--active");
+    const elem = $(".illandril-npc-quick-actions--outer-container.illandril-npc-quick-actions--active");
 
-    if (el) {
+    if (elem) {
       //check if the action box is going off the top of the screen
-      let rect = el[0].getBoundingClientRect();
+      let rect = elem[0].getBoundingClientRect();
       if (rect) {
         let viewable = rect.top >= 0;
-        if (viewable && el.css('transform')) {
+        if (viewable && elem.css('transform')) {
           //if the box is visible, we dont need to transform it downward
-          el[0].style.removeProperty('transform');
+          elem[0].style.removeProperty('transform');
         }
         //check again in case we just moved it off of the screen by removing the transform
-        rect = el[0].getBoundingClientRect();
+        rect = elem[0].getBoundingClientRect();
         viewable = rect.top >= 0;
         if (!viewable) {
           //if the box is going off the top of the screen, move it down relative to the tokenHUD element so that it appears underneath
           const offset = token.h * canvas.stage.scale.y * 2.2;
-          el.css('transform', 'translateY(calc(100% + ' + offset + 'px))');
+          elem.css('transform', 'translateY(calc(100% + ' + offset + 'px))');
         }
       }
     }
