@@ -58,10 +58,20 @@ export const show = (token) => {
   const leftOffset = Math.floor(token.worldTransform.tx - lrOffset);
   const rightOffset = Math.ceil(token.worldTransform.tx + tokenWidth + lrOffset);
   const bottomOffset = getTokenHUDTop() - 6;
-  actionsOuterContainer.style.left = leftOffset + 'px';
-  actionsOuterContainer.style.right = 'calc(100% - ' + rightOffset + 'px)';
-  actionsOuterContainer.style.bottom = 'calc(100% - ' + bottomOffset + 'px)';
+  actionsOuterContainer.style.left = `${leftOffset}px`;
+  actionsOuterContainer.style.right = `calc(100% - ${rightOffset}px)`;
+  actionsOuterContainer.style.top = '';
+  actionsOuterContainer.style.bottom = `calc(100% - ${bottomOffset}px)`;
   actionsOuterContainer.classList.add(CSS_ACTIVE);
+
+  const rect = actionsOuterContainer.getBoundingClientRect();
+  if (rect && rect.top <= 0) {
+    // If the box is going off the top of the screen, move it down relative to the tokenHUD element so that it appears underneath
+    const topOffset = getTokenHUDBottom() + 6;
+    console.error(`${topOffset}px`);
+    actionsOuterContainer.style.bottom = '';
+    actionsOuterContainer.style.top = `${topOffset}px`;
+  }
 };
 
 function getTokenHUDTop() {
@@ -74,6 +84,22 @@ function getTokenHUDTop() {
     bestTop = Math.min(bestTop, $(child).offset().top);
   });
   return bestTop;
+}
+
+function getTokenHUDBottom() {
+  // Why not just get the offset().top of the token HUD element, or the columns?
+  // Because the columns flow outside the HUD element, and often have lots of empty space in them
+  const tokenHUDColumns = canvas.tokens.hud.element.children();
+  const tokenHUDElements = tokenHUDColumns.children();
+  let bestBottom = 0;
+  Array.prototype.forEach.call(tokenHUDElements, (child) => {
+    const jqChild = $(child);
+    const top = jqChild.offset().top;
+    const height = jqChild.outerHeight();
+    const bottom = top + height;
+    bestBottom = Math.max(bestBottom, bottom);
+  });
+  return bestBottom;
 }
 
 function getActionRow(action) {

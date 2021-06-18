@@ -15,8 +15,8 @@
   padding: 4px 8px;
   pointer-events: auto;
   color: #000;
-  max-height: 40vh;
-  overflow: scroll;
+  max-height: 20em;
+  overflow-y: auto;
 }
 
 .illandril-npc-quick-actions--activationCategory + .illandril-npc-quick-actions--activationCategory {

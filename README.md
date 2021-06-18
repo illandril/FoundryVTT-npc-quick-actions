@@ -10,3 +10,6 @@ This is a module for Foundry Virtual Tabletop that adds a "Quick Actions" menu a
 For actors with features with an "Action Recharge" that are not currently charged, or Legendary Actions where the available Legendary Actions is less than the maximum, a special "Reset Actions" quick action is also provided. Clicking this special action resets the token's available Legendary Actions to the maximum, and rolls each rechargeable action to see if it is recharged.
 
 This currently only supports the DnD5e System.
+
+# Credits
+The concept and initial work towards making the Quick Action list scrollable and shift to being below the token when the token is close to the top of the screen was added by [AG-Guardian](https://github.com/AG-Guardian).
