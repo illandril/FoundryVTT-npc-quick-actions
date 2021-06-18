@@ -21,6 +21,7 @@
         }
     ],
     "dependencies": [],
+    "system": "dnd5e",
     "conflicts": [],
     "esmodules": [
         "./scripts/index.js"
