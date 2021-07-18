@@ -68,7 +68,6 @@ export const show = (token) => {
   if (rect && rect.top <= 0) {
     // If the box is going off the top of the screen, move it down relative to the tokenHUD element so that it appears underneath
     const topOffset = getTokenHUDBottom() + 6;
-    console.error(`${topOffset}px`);
     actionsOuterContainer.style.bottom = '';
     actionsOuterContainer.style.top = `${topOffset}px`;
   }
