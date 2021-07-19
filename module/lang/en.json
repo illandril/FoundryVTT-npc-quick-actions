@@ -11,6 +11,13 @@
   "illandril-npc-quick-actions.setting.showUnequippedPCItems.hint": "If checked, items that are not not marked as \"Equipped\" will be shown in the Quick Actions menu for \"Player Character\" type actors with a player owner.",
   "illandril-npc-quick-actions.setting.showZeroUsesRemainActions.label": "Show Actions with Zero Uses Left",
   "illandril-npc-quick-actions.setting.showZeroUsesRemainActions.hint": "If checked, actions that have zero uses remaining will be shown in the Quick Actions menu.",
+  "illandril-npc-quick-actions.setting.showForPCActors.label": "Show for Player Character Actors",
+  "illandril-npc-quick-actions.setting.showForPCActors.hint": "If checked, the Quick Actions will show for Player Character actors. Note: This is based on the actor type, not based on if the actor has a player owner or not.",
+  "illandril-npc-quick-actions.setting.showForNPCActors.label": "Show for Non-Player Character Actors",
+  "illandril-npc-quick-actions.setting.showForNPCActors.hint": "If checked, the Quick Actions will show for Non-Player Character actors. Note: This is based on the actor type, not based on if the actor has a player owner or not.",
+  "illandril-npc-quick-actions.setting.showForVehicleActors.label": "Show for Vehicle Actors",
+  "illandril-npc-quick-actions.setting.showForVehicleActors.hint": "If checked, the Quick Actions will show for Vehicle actors.",
+
 
   "illandril-npc-quick-actions.activation_action": "Actions",
   "illandril-npc-quick-actions.activation_bonus": "Bonus Actions",

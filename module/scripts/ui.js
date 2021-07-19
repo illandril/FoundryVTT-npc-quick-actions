@@ -1,4 +1,5 @@
 import * as QuickActions from './quick-actions.js';
+import Settings from './settings.js';
 
 const CSS_PREFIX = 'illandril-npc-quick-actions--';
 const CSS_ACTIVE = CSS_PREFIX + 'active';
@@ -26,13 +27,24 @@ export const hide = () => {
 
 export const show = (token) => {
   hide();
-  if (!token) {
-    return;
+  if (!token || !token.owner || !game.user.hasRole(Settings.MinimumRole.get())) {
+    return false;
   }
+
   const actor = token.actor;
+  if(actor.data.type === 'character' && !Settings.ShowForPCActors.get()) {
+    return false;
+  }
+  if(actor.data.type === 'npc' && !Settings.ShowForNPCActors.get()) {
+    return false;
+  }
+  if(actor.data.type === 'vehicle' && !Settings.ShowForVehicleActors.get()) {
+    return false;
+  }
+
   const actions = QuickActions.get(actor);
   if (!actions || actions.length === 0) {
-    return;
+    return false;
   }
 
   let lastActivationCategory = null;
@@ -71,6 +83,7 @@ export const show = (token) => {
     actionsOuterContainer.style.bottom = '';
     actionsOuterContainer.style.top = `${topOffset}px`;
   }
+  return true;
 };
 
 function getTokenHUDTop() {

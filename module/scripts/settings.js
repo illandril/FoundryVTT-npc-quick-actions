@@ -74,6 +74,10 @@ const Settings = {
   ShowUnequippedNPCItems: new BooleanSetting('showUnequippedNPCItems', false, { hasHint: true } ),
   ShowUnequippedPCItems: new BooleanSetting('showUnequippedPCItems', false, { hasHint: true } ),
   ShowZeroUsesRemainActions: new BooleanSetting('showZeroUsesRemainActions', false, { hasHint: true } ),
+  ShowUnpreparedNPCSpells: new BooleanSetting('showUnpreparedNPCSpells', false, { hasHint: true } ),
+  ShowForPCActors: new BooleanSetting('showForPCActors', true, { hasHint: true } ),
+  ShowForNPCActors: new BooleanSetting('showForNPCActors', true, { hasHint: true } ),
+  ShowForVehicleActors: new BooleanSetting('showForVehicleActors', true, { hasHint: true } ),
 };
 
 Object.freeze(Settings);

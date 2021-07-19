@@ -1,4 +1,3 @@
-import Settings from './settings.js';
 import * as UI from './ui.js';
 
 let shownToken = null;
@@ -37,8 +36,7 @@ Hooks.on('updateActor', (actor) => {
 
 Hooks.on('renderTokenHUD', (tokenHUD) => {
   const token = tokenHUD.object;
-  if (token.owner && game.user.hasRole(Settings.MinimumRole.get())) {
-    UI.show(token);
+  if (UI.show(token)) {
     shownToken = token;
   }
 });
