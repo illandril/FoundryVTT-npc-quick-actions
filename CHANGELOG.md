@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.3.3](https://github.com/illandril/FoundryVTT-npc-quick-actions/tree/v1.3.3) (2021-07-19)
+
+[Full Changelog](https://github.com/illandril/FoundryVTT-npc-quick-actions/compare/v1.3.2...v1.3.3)
+
+**Enhancements**
+
+- \[Request\] Add an option to enable/disable quick actions list per token type [\#12](https://github.com/illandril/FoundryVTT-npc-quick-actions/issues/12)
+
 ## [v1.3.2](https://github.com/illandril/FoundryVTT-npc-quick-actions/tree/v1.3.2) (2021-07-18)
 
 [Full Changelog](https://github.com/illandril/FoundryVTT-npc-quick-actions/compare/v1.3.1...v1.3.2)
