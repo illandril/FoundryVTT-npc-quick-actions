@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.3.4](https://github.com/illandril/FoundryVTT-npc-quick-actions/tree/v1.3.4) (2022-01-14)
+
+[Full Changelog](https://github.com/illandril/FoundryVTT-npc-quick-actions/compare/v1.3.3...v1.3.4)
+
 ## [v1.3.3](https://github.com/illandril/FoundryVTT-npc-quick-actions/tree/v1.3.3) (2021-07-19)
 
 [Full Changelog](https://github.com/illandril/FoundryVTT-npc-quick-actions/compare/v1.3.2...v1.3.3)
