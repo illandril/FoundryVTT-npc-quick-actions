@@ -32,13 +32,13 @@ export const show = (token) => {
   }
 
   const actor = token.actor;
-  if(actor.data.type === 'character' && !Settings.ShowForPCActors.get()) {
+  if(actor.type === 'character' && !Settings.ShowForPCActors.get()) {
     return false;
   }
-  if(actor.data.type === 'npc' && !Settings.ShowForNPCActors.get()) {
+  if(actor.type === 'npc' && !Settings.ShowForNPCActors.get()) {
     return false;
   }
-  if(actor.data.type === 'vehicle' && !Settings.ShowForVehicleActors.get()) {
+  if(actor.type === 'vehicle' && !Settings.ShowForVehicleActors.get()) {
     return false;
   }
 

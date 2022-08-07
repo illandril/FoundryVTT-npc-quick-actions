@@ -55,17 +55,16 @@ export const get = (actor) => {
     }
     return caseInsensitiveCompare(a.name, b.name);
   });
-  const maxLegendaryActions = getProperty(actor.data, 'data.resources.legact.max');
-  const currentLegendaryActions = getProperty(actor.data, 'data.resources.legact.value');
+  const maxLegendaryActions = getProperty(actor.system, 'resources.legact.max');
+  const currentLegendaryActions = getProperty(actor.system, 'resources.legact.value');
   if (maxLegendaryActions > currentLegendaryActions) {
     newTurnResets.push(() => {
       ChatMessage.create({
         whisper: [game.userId],
-        // TODO: Localize
-        content: '*Legendary Actions have been reset*',
+        content: game.i18n.localize('illandril-npc-quick-actions.legendary-actions-reset'),
         speaker: ChatMessage.getSpeaker({ actor }),
       });
-      actor.update({ 'data.resources.legact.value': maxLegendaryActions });
+      actor.update({ 'system.resources.legact.value': maxLegendaryActions });
     });
   }
   if (newTurnResets.length > 0) {
@@ -87,7 +86,7 @@ function getAction(actor, item) {
   let roll = () => item.roll();
   let name = item.name;
   let activationCategory;
-  const activationType = getProperty(item.data, 'data.activation.type');
+  const activationType = getProperty(item.system, 'activation.type');
   switch (activationType) {
     case 'action':
       activationCategory = ACTIVATION_CATEGORY.ACTION;
@@ -119,7 +118,7 @@ function getAction(actor, item) {
 
   let subcategory = 0;
   let typeCategory;
-  const itemType = item.data.type;
+  const itemType = item.type;
   switch (itemType) {
     case 'feat':
       typeCategory = TYPE_CATEGORY.FEATURE;
@@ -127,16 +126,16 @@ function getAction(actor, item) {
     case 'spell':
       typeCategory = TYPE_CATEGORY.SPELL;
       roll = () => actor.useSpell(item);
-      const spellData = item.data.data;
+      const spellData = item.system;
       const preparationMode = (spellData.preparation && spellData.preparation.mode) || 'prepared';
+      let prefix;
       switch (preparationMode) {
         case 'pact':
-          // TODO: Localize
-          name = '[P] ' + name;
+          prefix = game.i18n.localize("illandril-npc-quick-actions.spell-abbr.pact");
           subcategory = 0.5;
           break;
         case 'prepared':
-          if (actor.data.type !== 'npc' && !spellData.preparation.prepared) {
+          if (actor.type !== 'npc' && !spellData.preparation.prepared) {
             if (actor.hasPlayerOwner) {
               if (!Settings.ShowUnpreparedPCSpells.get()) {
                 return null;
@@ -151,27 +150,25 @@ function getAction(actor, item) {
         case 'always':
           subcategory = spellData.level;
           if (spellData.level === 0) {
-            // TODO: Localize
-            name = '[C] ' + name;
+            prefix = game.i18n.localize("illandril-npc-quick-actions.spell-abbr.cantrip");
           } else {
-            name = '[' + spellData.level + '] ' + name;
+            prefix = `${spellData.level}`;
           }
           break;
         case 'innate':
           subcategory = -10;
-          // TODO: Localize
-          name = '[I] ' + name;
+          prefix = game.i18n.localize("illandril-npc-quick-actions.spell-abbr.innate");
           break;
         case 'atwill':
           subcategory = -20;
-          // TODO: Localize
-          name = '[W] ' + name;
+          prefix = game.i18n.localize("illandril-npc-quick-actions.spell-abbr.atwill");
           break;
         default:
           subcategory = -30;
-          name = '[?] ' + name;
+          prefix = game.i18n.localize("illandril-npc-quick-actions.spell-abbr.unknown");
           break;
       }
+      name =  `[${prefix}] ${name}`;
       break;
     default:
       if (itemType === 'weapon') {
@@ -183,7 +180,7 @@ function getAction(actor, item) {
       } else {
         typeCategory = TYPE_CATEGORY.OTHER;
       }
-      if (actor.data.type !== 'npc' && !getProperty(item, 'data.data.equipped')) {
+      if (actor.type !== 'npc' && !getProperty(item.system, 'equipped')) {
         if (actor.hasPlayerOwner) {
           if (!Settings.ShowUnequippedPCItems.get()) {
             return null;
@@ -206,20 +203,17 @@ function getAction(actor, item) {
       name = `${name} (${uses.available})`;
     }
 
-    const recharge = item.data.type === 'feat' ? item.data.data.recharge : null;
+    const recharge = item.type === 'feat' ? item.system.recharge : null;
     if (recharge && recharge.value && !recharge.charged) {
-      newTurnReset = () => {
+      newTurnReset = async () => {
         const resetRoll = new Roll('1d6');
-        resetRoll.roll();
-        // TODO: Localize
-        let flavor = item.name + ' - Recharge Roll: ';
+        await resetRoll.evaluate({ async: true });
+        let flavor = `${item.name} - ${game.i18n.localize("illandril-npc-quick-actions.recharge-roll")}: `;
         if (resetRoll.total >= recharge.value) {
-          item.update({ 'data.recharge.charged': true });
-          // TODO: Localize
-          flavor += '☑';
+          item.update({ 'system.recharge.charged': true });
+          flavor += game.i18n.localize("illandril-npc-quick-actions.recharge-success");
         } else {
-          // TODO: Localize
-          flavor += '☒';
+          flavor += game.i18n.localize("illandril-npc-quick-actions.recharge-fail");
         }
         resetRoll.toMessage({ flavor, speaker: ChatMessage.getSpeaker({ actor }) });
       };

@@ -27,5 +27,14 @@
   "illandril-npc-quick-actions.activation_special": "Special Actions",
   "illandril-npc-quick-actions.activation_crew": "Crew Actions",
   "illandril-npc-quick-actions.activation_new-turn": "Start of Turn",
-  "illandril-npc-quick-actions.reset-for-new-turn": "Reset Actions for New Turn"
+  "illandril-npc-quick-actions.reset-for-new-turn": "Reset Actions for New Turn",
+  "illandril-npc-quick-actions.legendary-actions-reset": "*Legendary Actions have been reset*",
+  "illandril-npc-quick-actions.spell-abbr.pact": "P",
+  "illandril-npc-quick-actions.spell-abbr.cantrip": "C",
+  "illandril-npc-quick-actions.spell-abbr.innate": "I",
+  "illandril-npc-quick-actions.spell-abbr.atwill": "W",
+  "illandril-npc-quick-actions.spell-abbr.unknown": "?",
+  "illandril-npc-quick-actions.recharge-roll": "Recharge Roll",
+  "illandril-npc-quick-actions.recharge-success": "☑",
+  "illandril-npc-quick-actions.recharge-fail": "☒"
 }
