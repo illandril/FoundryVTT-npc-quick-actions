@@ -83,7 +83,7 @@ export const get = (actor) => {
 };
 
 function getAction(actor, item) {
-  let roll = () => item.roll();
+  const roll = () => item.use();
   let name = item.name;
   let activationCategory;
   const activationType = getProperty(item.system, 'activation.type');
@@ -125,7 +125,6 @@ function getAction(actor, item) {
       break;
     case 'spell':
       typeCategory = TYPE_CATEGORY.SPELL;
-      roll = () => actor.useSpell(item);
       const spellData = item.system;
       const preparationMode = (spellData.preparation && spellData.preparation.mode) || 'prepared';
       let prefix;
