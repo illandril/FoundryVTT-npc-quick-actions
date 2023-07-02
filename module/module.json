@@ -2,12 +2,12 @@
     "id": "illandril-npc-quick-actions",
     "title": "Illandril's Token Quick Actions (5e)",
     "description": "Shows a \"quick actions\" menu when right-clicking a token, showing the actions available to that token during combat (currently only compatible with the DnD5e system).",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "library": "false",
     "manifestPlusVersion": "1.2.0",
     "compatibility": {
         "minimum": 10,
-        "verified": 10
+        "verified": 11
     },
     "type": "module",
     "authors": [
@@ -15,7 +15,7 @@
             "name": "Joe Spandrusyszyn (illandril)",
             "url": "https://github.com/illandril",
             "email": "foundry-modules@illandril.net",
-            "discord": "joespan#3152",
+            "discord": "joespan",
             "ko-fi": "illandril",
             "patreon": "illandril",
             "reddit": "u/illandril"
@@ -27,7 +27,7 @@
                 "id": "dnd5e",
                 "type": "system",
                 "compatibility": {
-                    "verified": "1.6.3"
+                    "verified": "2.2.1"
                 }
             }
         ]
@@ -51,13 +51,13 @@
     "flags": {
         "allowBugReporter": true
     },
-    "changelog": "https://github.com/illandril/FoundryVTT-npc-quick-actions/blob/master/CHANGELOG.md",
+    "changelog": "https://github.com/illandril/FoundryVTT-npc-quick-actions/blob/main/CHANGELOG.md",
     "manifest": "https://github.com/illandril/FoundryVTT-npc-quick-actions/releases/latest/download/module.json",
     "download": "https://github.com/illandril/FoundryVTT-npc-quick-actions/releases/download/v2.0.1/module.zip",
     "media": [
         {
             "type": "screenshot",
-            "url": "https://github.com/illandril/FoundryVTT-npc-quick-actions/raw/master/screenshots/example-a.png"
+            "url": "https://github.com/illandril/FoundryVTT-npc-quick-actions/raw/main/screenshots/example-a.png"
         }
     ]
 }
