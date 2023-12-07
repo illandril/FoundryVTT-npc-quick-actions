@@ -222,6 +222,8 @@ function getAction(actor, item) {
   }
   return {
     roll,
+    actor,
+    item,
     name,
     activationCategory,
     typeCategory,

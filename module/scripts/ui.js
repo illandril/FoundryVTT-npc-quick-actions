@@ -1,7 +1,8 @@
 import * as QuickActions from './quick-actions.js';
 import Settings from './settings.js';
+import { KEY } from './module.js';
 
-const CSS_PREFIX = 'illandril-npc-quick-actions--';
+const CSS_PREFIX = `${KEY}--`;
 const CSS_ACTIVE = CSS_PREFIX + 'active';
 const CSS_OUTER_CONTAINER = CSS_PREFIX + 'outer-container';
 const CSS_CONTAINER = CSS_PREFIX + 'container';
@@ -117,8 +118,15 @@ function getTokenHUDBottom() {
 function getActionRow(action) {
   const row = document.createElement('div');
   row.classList.add(CSS_ENTRY);
-  row.addEventListener('click', () => {
+  row.addEventListener('click', (event) => {
+    Hooks.callAll(`${KEY}.ActionClick`, event, action)
     action.roll();
+  });
+  row.addEventListener('mouseenter', (event) => {
+    Hooks.callAll(`${KEY}.ActionHoverOn`, event, action)
+  });
+  row.addEventListener('mouseleave', (event) => {
+    Hooks.callAll(`${KEY}.ActionHoverOff`, event, action)
   });
   row.appendChild(document.createTextNode(action.name));
   return row;
