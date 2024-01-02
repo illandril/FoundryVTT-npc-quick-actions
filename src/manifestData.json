@@ -1,0 +1,37 @@
+{
+  "compatibility": {
+    "minimum": 10,
+    "verified": 11
+  },
+  "esmodules": [
+    "module.js"
+  ],
+  "styles": [
+    "styles.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "compatibility": {
+          "verified": "2.2.1"
+        }
+      }
+    ]
+  },
+  "license": "LICENSE",
+  "media": [
+    {
+      "type": "screenshot",
+      "url": "https://github.com/illandril/FoundryVTT-npc-quick-actions/raw/main/screenshots/example-a.png"
+    }
+  ]
+}
