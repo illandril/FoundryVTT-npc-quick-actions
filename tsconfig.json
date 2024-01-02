@@ -35,7 +35,6 @@
     "types": [
       "jest",
       "jquery",
-      "@testing-library/jest-dom",
       "@illandril/foundryvtt-types",
       "@illandril/foundryvtt-utils/dist/tests/setupAfterEnv"
     ],                                      /* Specify type package names to be included without being referenced in a source file. */
