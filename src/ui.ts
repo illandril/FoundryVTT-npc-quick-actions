@@ -37,6 +37,7 @@ const createCategoryContainer = (activationCategory: ActivationCategory) => {
 
   const categoryTitle = game.i18n.localize(activationCategory.name);
   const titleElement = document.createElement('div');
+  titleElement.setAttribute('data-testid', 'categoryTitle');
   titleElement.classList.add(CSS_ACTIVATION_CATEGORY_NAME);
   titleElement.appendChild(document.createTextNode(categoryTitle));
   activationCategoryContainer.appendChild(titleElement);
@@ -151,6 +152,7 @@ declare global {
 function getActionRow(action: Action) {
   const row = document.createElement('div');
   row.classList.add(CSS_ENTRY);
+  row.setAttribute('data-testid', 'action');
   row.addEventListener('click', (event) => {
     Hooks.callAll(`${module.id}.ActionClick`, event, action);
     action.roll();
