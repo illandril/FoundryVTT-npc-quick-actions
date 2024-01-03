@@ -1,6 +1,6 @@
 {
   "name": "@illandril/foundryvtt-npc-quick-actions",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Illandril's Token Quick Actions (5e): Shows a \"quick actions\" menu when right-clicking a token, showing the actions available to that token during combat (currently only compatible with the DnD5e system).",
   "type": "module",
   "scripts": {
