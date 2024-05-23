@@ -1,34 +1,29 @@
 import * as ItemSystem from './item-system';
 import module from './module';
-import {
-  showUnequippedItems,
-  showUnpreparedSpells,
-  ShowZeroUsesRemainActions,
-} from './settings';
+import { ShowZeroUsesRemainActions, showUnequippedItems, showUnpreparedSpells } from './settings';
 
 function caseInsensitiveCompare(a: string, b: string) {
   return a.localeCompare(b, undefined, { sensitivity: 'base' });
 }
 
 export type Action = {
-  roll: () => void
-  actor: Actor
-  item?: Item
-  name: string
-  activationCategory: ActivationCategory
-  typeCategory: TypeCategory
-  subcategory: number
-  newTurnReset?: (() => Promise<void>) | null
+  roll: () => void;
+  actor: Actor;
+  item?: Item;
+  name: string;
+  activationCategory: ActivationCategory;
+  typeCategory: TypeCategory;
+  subcategory: number;
+  newTurnReset?: (() => Promise<void>) | null;
 };
 
-// eslint-disable-next-line max-lines-per-function
 export const get = (actor: Actor) => {
   if (!actor) {
     return null;
   }
   const newTurnResets: (() => Promise<void>)[] = [];
   const actions: Action[] = [];
-  actor.items.forEach((item) => {
+  for (const item of actor.items) {
     const action = getAction(actor, item as dnd5e.documents.Item5e);
     if (action) {
       actions.push(action);
@@ -36,7 +31,7 @@ export const get = (actor: Actor) => {
         newTurnResets.push(action.newTurnReset);
       }
     }
-  });
+  }
   actions.sort((a, b) => {
     const activationCategorySort = a.activationCategory.sort - b.activationCategory.sort;
     if (activationCategorySort !== 0) {
@@ -54,28 +49,35 @@ export const get = (actor: Actor) => {
   });
   const maxLegendaryActions = foundry.utils.getProperty(actor.system, 'resources.legact.max');
   const currentLegendaryActions = foundry.utils.getProperty(actor.system, 'resources.legact.value');
-  if (typeof maxLegendaryActions === 'number' && typeof currentLegendaryActions === 'number' && maxLegendaryActions > currentLegendaryActions) {
-    // eslint-disable-next-line @typescript-eslint/require-await
+  if (
+    typeof maxLegendaryActions === 'number' &&
+    typeof currentLegendaryActions === 'number' &&
+    maxLegendaryActions > currentLegendaryActions
+  ) {
     newTurnResets.push(async () => {
+      if (!game.userId) {
+        throw new Error('game.userId was not set - this is unexpected');
+      }
+
       ChatMessage.create({
-        whisper: [game.userId!],
+        whisper: [game.userId],
         content: module.localize('legendary-actions-reset'),
         speaker: { actor },
       });
-      void actor.update({ 'system.resources.legact.value': maxLegendaryActions });
+      await actor.update({ 'system.resources.legact.value': maxLegendaryActions });
     });
   }
   if (newTurnResets.length > 0) {
     actions.push({
       roll: () => {
-        newTurnResets.forEach((newTurnReset) => {
+        for (const newTurnReset of newTurnResets) {
           void newTurnReset();
-        });
+        }
       },
       actor,
       name: module.localize('reset-for-new-turn'),
-      activationCategory: ACTIVATION_CATEGORY.NEW_TURN,
-      typeCategory: TYPE_CATEGORY.OTHER,
+      activationCategory: ACTIVATION_CATEGORY.newTurn,
+      typeCategory: TYPE_CATEGORY.other,
       subcategory: 0,
     });
   }
@@ -83,20 +85,19 @@ export const get = (actor: Actor) => {
   return actions;
 };
 
-
 export type ActivationCategory = {
-  sort: number
-  name: string
+  sort: number;
+  name: string;
 };
 const ACTIVATION_CATEGORY = {
-  ACTION: { sort: 1, name: 'illandril-npc-quick-actions.activation_action' },
-  BONUS: { sort: 2, name: 'illandril-npc-quick-actions.activation_bonus' },
-  REACTION: { sort: 3, name: 'illandril-npc-quick-actions.activation_reaction' },
-  LEGENDARY: { sort: 4, name: 'illandril-npc-quick-actions.activation_legendary' },
-  LAIR: { sort: 5, name: 'illandril-npc-quick-actions.activation_lair' },
-  SPECIAL: { sort: 6, name: 'illandril-npc-quick-actions.activation_special' },
-  CREW: { sort: 7, name: 'illandril-npc-quick-actions.activation_crew' },
-  NEW_TURN: { sort: 99, name: 'illandril-npc-quick-actions.activation_new-turn' },
+  action: { sort: 1, name: 'illandril-npc-quick-actions.activation_action' },
+  bonus: { sort: 2, name: 'illandril-npc-quick-actions.activation_bonus' },
+  reaction: { sort: 3, name: 'illandril-npc-quick-actions.activation_reaction' },
+  legendary: { sort: 4, name: 'illandril-npc-quick-actions.activation_legendary' },
+  lair: { sort: 5, name: 'illandril-npc-quick-actions.activation_lair' },
+  special: { sort: 6, name: 'illandril-npc-quick-actions.activation_special' },
+  crew: { sort: 7, name: 'illandril-npc-quick-actions.activation_crew' },
+  newTurn: { sort: 99, name: 'illandril-npc-quick-actions.activation_new-turn' },
 };
 
 const getActivationCategory = (item: Item) => {
@@ -104,29 +105,27 @@ const getActivationCategory = (item: Item) => {
   const activationType = foundry.utils.getProperty(item.system, 'activation.type');
   switch (activationType) {
     case 'action':
-      activationCategory = ACTIVATION_CATEGORY.ACTION;
+      activationCategory = ACTIVATION_CATEGORY.action;
       break;
     case 'bonus':
-      activationCategory = ACTIVATION_CATEGORY.BONUS;
+      activationCategory = ACTIVATION_CATEGORY.bonus;
       break;
     case 'reaction':
-      activationCategory = ACTIVATION_CATEGORY.REACTION;
+      activationCategory = ACTIVATION_CATEGORY.reaction;
       break;
     case 'legendary':
-      activationCategory = ACTIVATION_CATEGORY.LEGENDARY;
+      activationCategory = ACTIVATION_CATEGORY.legendary;
       break;
     case 'lair':
-      activationCategory = ACTIVATION_CATEGORY.LAIR;
+      activationCategory = ACTIVATION_CATEGORY.lair;
       break;
     case 'crew':
-      activationCategory = ACTIVATION_CATEGORY.CREW;
+      activationCategory = ACTIVATION_CATEGORY.crew;
       break;
     case 'special':
-      activationCategory = ACTIVATION_CATEGORY.SPECIAL;
+      activationCategory = ACTIVATION_CATEGORY.special;
       break;
-    case 'minute':
-    case 'hour':
-    case 'day':
+    // minute, hour, and day intentionally included in default
     default:
       activationCategory = null;
   }
@@ -134,16 +133,16 @@ const getActivationCategory = (item: Item) => {
 };
 
 type TypeCategory = {
-  sort: number
-  prefix?: string
+  sort: number;
+  prefix?: string;
 };
 const TYPE_CATEGORY = {
-  WEAPON: { sort: 1 },
-  EQUIPMENT: { sort: 2 },
-  CONSUMABLE: { sort: 3 },
-  OTHER: { sort: 4 },
-  FEATURE: { sort: 5 },
-  SPELL: { sort: 6 },
+  weapon: { sort: 1 },
+  equipment: { sort: 2 },
+  consumable: { sort: 3 },
+  other: { sort: 4 },
+  feature: { sort: 5 },
+  spell: { sort: 6 },
 };
 
 const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
@@ -155,13 +154,13 @@ const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcat
       prefix = module.localize('spell-abbr.pact');
       subcategory = 0.5;
       break;
+    // biome-ignore lint/suspicious/noFallthroughSwitchClause: 'prepared' intentionally falls through
     case 'prepared':
       if (item.actor?.type !== 'npc' && !spellData.preparation?.prepared) {
         if (!showUnpreparedSpells(item.actor)) {
           return null;
         }
       }
-      // eslint-disable-next-line no-fallthrough
     case 'always':
       subcategory = spellData.level ?? 0;
       if (subcategory === 0) {
@@ -187,7 +186,7 @@ const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcat
   return {
     subcategory,
     typeCategory: {
-      ...TYPE_CATEGORY.SPELL,
+      ...TYPE_CATEGORY.spell,
       prefix: `[${prefix}] `,
     },
   };
@@ -199,19 +198,19 @@ const getTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory
   const itemType = item.type;
   switch (itemType) {
     case 'feat':
-      typeCategory = TYPE_CATEGORY.FEATURE;
+      typeCategory = TYPE_CATEGORY.feature;
       break;
     case 'spell':
       return getSpellTypeCategory(item);
     default:
       if (itemType === 'weapon') {
-        typeCategory = TYPE_CATEGORY.WEAPON;
+        typeCategory = TYPE_CATEGORY.weapon;
       } else if (itemType === 'equipment') {
-        typeCategory = TYPE_CATEGORY.EQUIPMENT;
+        typeCategory = TYPE_CATEGORY.equipment;
       } else if (itemType === 'consumable') {
-        typeCategory = TYPE_CATEGORY.CONSUMABLE;
+        typeCategory = TYPE_CATEGORY.consumable;
       } else {
-        typeCategory = TYPE_CATEGORY.OTHER;
+        typeCategory = TYPE_CATEGORY.other;
       }
       if (item.actor?.type !== 'npc' && !foundry.utils.getProperty(item.system, 'equipped')) {
         if (!showUnequippedItems(item.actor)) {
@@ -255,7 +254,7 @@ const getAction = (actor: Actor, item: dnd5e.documents.Item5e): Action | null =>
   let name = `${typeCategory.typeCategory?.prefix ?? ''}${item.name}`;
   module.logger.debug('getAction() - name', name);
 
-  let newTurnReset = null;
+  let newTurnReset: (() => Promise<void>) | null = null;
   const uses = ItemSystem.calculateUsesForItem(item);
   if (uses) {
     module.logger.debug('getAction() - uses', uses);

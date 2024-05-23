@@ -1,11 +1,6 @@
 import module from './module';
-import { Action, ActivationCategory, get } from './quick-actions';
-import {
-  MinimumRole,
-  ShowForNPCActors,
-  ShowForPCActors,
-  ShowForVehicleActors,
-} from './settings';
+import { type Action, type ActivationCategory, get } from './quick-actions';
+import { MinimumRole, ShowForNPCActors, ShowForPCActors, ShowForVehicleActors } from './settings';
 
 const CSS_ACTIVE = module.cssPrefix.child('active');
 const CSS_OUTER_CONTAINER = module.cssPrefix.child('outer-container');
@@ -49,7 +44,7 @@ const createCategoryContainer = (activationCategory: ActivationCategory) => {
 export const show = (token?: Token | null) => {
   hide();
   module.logger.debug('show()', token);
-  if (!token || !token.owner || !game.user?.hasRole(MinimumRole.get())) {
+  if (!(token?.document?.isOwner && game.user?.hasRole(MinimumRole.get()))) {
     module.logger.debug('show() -> false, not owner or insufficient role');
     return false;
   }
@@ -143,9 +138,9 @@ function getTokenHUDBottom() {
 
 declare global {
   interface HookCallbacks {
-    ['illandril-npc-quick-actions.ActionClick']: (event: Event, action: Action) => void
-    ['illandril-npc-quick-actions.ActionHoverOn']: (event: Event, action: Action) => void
-    ['illandril-npc-quick-actions.ActionHoverOff']: (event: Event, action: Action) => void
+    'illandril-npc-quick-actions.ActionClick': (event: Event, action: Action) => void;
+    'illandril-npc-quick-actions.ActionHoverOn': (event: Event, action: Action) => void;
+    'illandril-npc-quick-actions.ActionHoverOff': (event: Event, action: Action) => void;
   }
 }
 

@@ -1,8 +1,8 @@
 import module from '../module';
 
 type CalculatedUses = {
-  available: number
-  maximum?: number | null
+  available: number;
+  maximum?: number | null;
 };
 
 export const calculateUsesForItem = (item: dnd5e.documents.Item5e): CalculatedUses | null => {
@@ -13,11 +13,11 @@ export const calculateUsesForItem = (item: dnd5e.documents.Item5e): CalculatedUs
   }
   const itemData = item.system;
   const consume = (itemData as dnd5e.documents.ItemSystemData.ActivatedEffect).consume;
-  if (consume && consume.target) {
+  if (consume?.target) {
     return calculateConsumeUses(item.actor, consume);
   }
   const uses = (itemData as dnd5e.documents.ItemSystemData.Consumable).uses;
-  if (typeof uses?.max === 'number' && uses.max > 0 || typeof uses?.value === 'number' && uses.value > 0) {
+  if ((typeof uses?.max === 'number' && uses.max > 0) || (typeof uses?.value === 'number' && uses.value > 0)) {
     return calculateLimitedUses(itemData);
   }
 
@@ -39,7 +39,11 @@ export const calculateUsesForItem = (item: dnd5e.documents.Item5e): CalculatedUs
   return null;
 };
 
-function calculateConsumeUses(actor: dnd5e.documents.Actor5e, consume: NonNullable<dnd5e.documents.ItemSystemData.ActivatedEffect['consume']>) {
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Legacy
+function calculateConsumeUses(
+  actor: dnd5e.documents.Actor5e,
+  consume: NonNullable<dnd5e.documents.ItemSystemData.ActivatedEffect['consume']>,
+) {
   module.logger.debug('calculateConsumeUses()', actor, consume);
   let available: number | null = null;
   let maximum: number | null = null;
@@ -87,8 +91,8 @@ function calculateLimitedUses(itemData: dnd5e.documents.ItemSystemData.Consumabl
   let available = itemData.uses?.value ?? 0;
   let maximum = itemData.uses?.max ?? 0;
   if (typeof maximum === 'string') {
-    maximum = parseInt(maximum, 10);
-    if (isNaN(maximum)) {
+    maximum = Number.parseInt(maximum, 10);
+    if (Number.isNaN(maximum)) {
       maximum = 0;
     }
   }
@@ -101,7 +105,7 @@ function calculateLimitedUses(itemData: dnd5e.documents.ItemSystemData.Consumabl
 }
 
 function calculateFeatUses(itemData: dnd5e.documents.ItemSystemData.Feat) {
-  if (itemData.recharge && itemData.recharge.value) {
+  if (itemData.recharge?.value) {
     return { available: itemData.recharge.charged ? 1 : 0, maximum: 1 };
   }
   return null;

@@ -1,18 +1,27 @@
 import module from './module';
 
-const minimumRoleChoices = Object.keys(foundry.CONST.USER_ROLES).reduce((choices, roleKey) => {
-  if (roleKey !== 'NONE') {
-    choices[roleKey] = `USER.Role${roleKey.titleCase()}`;
-  }
-  return choices;
-}, {} as Record<string, string>);
+type UserRole = Exclude<keyof typeof foundry.CONST.USER_ROLES, 'NONE'>;
+const allUserRoles = Object.keys(foundry.CONST.USER_ROLES) as (keyof typeof foundry.CONST.USER_ROLES)[];
+const minimumRoleChoices = allUserRoles.reduce(
+  (choices, roleKey) => {
+    if (roleKey !== 'NONE') {
+      choices[roleKey] = `USER.Role${roleKey.titleCase()}`;
+    }
+    return choices;
+  },
+  {} as Record<UserRole, string>,
+);
 
-export const MinimumRole = module.settings.register('minimumRole', String, 'GAMEMASTER', {
+export const MinimumRole = module.settings.register<UserRole>('minimumRole', String, 'GAMEMASTER', {
   choices: minimumRoleChoices,
   hasHint: true,
 });
 
-const showFor = (actor: Actor | null, showForPC: typeof ShowUnpreparedPCSpells, showForNPC: typeof ShowUnpreparedNPCSpells) => {
+const showFor = (
+  actor: Actor | null,
+  showForPC: typeof ShowUnpreparedPCSpells,
+  showForNPC: typeof ShowUnpreparedNPCSpells,
+) => {
   if (actor?.hasPlayerOwner) {
     return showForPC.get();
   }
@@ -25,7 +34,8 @@ const ShowUnpreparedNPCSpells = module.settings.register('showUnpreparedNPCSpell
 const ShowUnpreparedPCSpells = module.settings.register('showUnpreparedPCSpells', Boolean, false, {
   hasHint: true,
 });
-export const showUnpreparedSpells = (actor: Actor | null) => showFor(actor, ShowUnpreparedPCSpells, ShowUnpreparedNPCSpells);
+export const showUnpreparedSpells = (actor: Actor | null) =>
+  showFor(actor, ShowUnpreparedPCSpells, ShowUnpreparedNPCSpells);
 
 const ShowUnequippedNPCItems = module.settings.register('showUnequippedNPCItems', Boolean, false, {
   hasHint: true,
@@ -33,7 +43,8 @@ const ShowUnequippedNPCItems = module.settings.register('showUnequippedNPCItems'
 const ShowUnequippedPCItems = module.settings.register('showUnequippedPCItems', Boolean, false, {
   hasHint: true,
 });
-export const showUnequippedItems = (actor: Actor | null) => showFor(actor, ShowUnequippedPCItems, ShowUnequippedNPCItems);
+export const showUnequippedItems = (actor: Actor | null) =>
+  showFor(actor, ShowUnequippedPCItems, ShowUnequippedNPCItems);
 
 export const ShowZeroUsesRemainActions = module.settings.register('showZeroUsesRemainActions', Boolean, false, {
   hasHint: true,

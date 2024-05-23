@@ -26,9 +26,13 @@ describe('renders the correct actions for Tuckerthranx', () => {
   it('with showZeroUsesRemaining = false', async () => {
     ShowZeroUsesRemainActions.set(false);
 
-    Hooks.callAll('renderTokenHUD', {
-      object: tuckerthranx,
-    } as TokenHUD, null as unknown as JQuery<HTMLElement>);
+    Hooks.callAll(
+      'renderTokenHUD',
+      {
+        object: tuckerthranx,
+      } as TokenHUD,
+      null as unknown as JQuery<HTMLElement>,
+    );
 
     await jest.runAllTimersAsync();
 
@@ -36,10 +40,7 @@ describe('renders the correct actions for Tuckerthranx', () => {
 
     expect(categoryTitles).toHaveLength(5);
     expect(categoryTitles[0].textContent).toBe('Actions');
-    expect(
-      getAllByTestId(categoryTitles[0].parentElement!, 'action')
-        .map((action) => action.textContent),
-    ).toEqual([
+    expect(getAllByTestId(categoryTitles[0].parentElement!, 'action').map((action) => action.textContent)).toEqual([
       'Bite',
       'Claws',
       'Tail',
@@ -56,37 +57,25 @@ describe('renders the correct actions for Tuckerthranx', () => {
     ]);
 
     expect(categoryTitles[1].textContent).toBe('Reactions');
-    expect(
-      getAllByTestId(categoryTitles[1].parentElement!, 'action')
-        .map((action) => action.textContent),
-    ).toEqual([
+    expect(getAllByTestId(categoryTitles[1].parentElement!, 'action').map((action) => action.textContent)).toEqual([
       '[1] Shield (4 / 4)',
       '[3] Counterspell (2 / 3)',
     ]);
 
     expect(categoryTitles[2].textContent).toBe('Legendary Actions');
-    expect(
-      getAllByTestId(categoryTitles[2].parentElement!, 'action')
-        .map((action) => action.textContent),
-    ).toEqual([
+    expect(getAllByTestId(categoryTitles[2].parentElement!, 'action').map((action) => action.textContent)).toEqual([
       'Detect (1)',
       'Legendary Resistance (2)',
       'Tail Attack (1)',
     ]);
 
     expect(categoryTitles[3].textContent).toBe('Special Actions');
-    expect(
-      getAllByTestId(categoryTitles[3].parentElement!, 'action')
-        .map((action) => action.textContent),
-    ).toEqual([
+    expect(getAllByTestId(categoryTitles[3].parentElement!, 'action').map((action) => action.textContent)).toEqual([
       'Frightful Presence',
     ]);
 
     expect(categoryTitles[4].textContent).toBe('Start of Turn');
-    expect(
-      getAllByTestId(categoryTitles[4].parentElement!, 'action')
-        .map((action) => action.textContent),
-    ).toEqual([
+    expect(getAllByTestId(categoryTitles[4].parentElement!, 'action').map((action) => action.textContent)).toEqual([
       'Reset Actions for New Turn',
     ]);
   });
@@ -94,9 +83,13 @@ describe('renders the correct actions for Tuckerthranx', () => {
   it('with showZeroUsesRemaining = true', async () => {
     ShowZeroUsesRemainActions.set(true);
 
-    Hooks.callAll('renderTokenHUD', {
-      object: tuckerthranx,
-    } as TokenHUD, null as unknown as JQuery<HTMLElement>);
+    Hooks.callAll(
+      'renderTokenHUD',
+      {
+        object: tuckerthranx,
+      } as TokenHUD,
+      null as unknown as JQuery<HTMLElement>,
+    );
 
     await jest.advanceTimersByTimeAsync(10);
 
@@ -104,10 +97,7 @@ describe('renders the correct actions for Tuckerthranx', () => {
 
     expect(categoryTitles).toHaveLength(5);
     expect(categoryTitles[0].textContent).toBe('Actions');
-    expect(
-      getAllByTestId(categoryTitles[0].parentElement!, 'action')
-        .map((action) => action.textContent),
-    ).toEqual([
+    expect(getAllByTestId(categoryTitles[0].parentElement!, 'action').map((action) => action.textContent)).toEqual([
       'Bite',
       'Claws',
       'Tail',
@@ -125,19 +115,13 @@ describe('renders the correct actions for Tuckerthranx', () => {
     ]);
 
     expect(categoryTitles[1].textContent).toBe('Reactions');
-    expect(
-      getAllByTestId(categoryTitles[1].parentElement!, 'action')
-        .map((action) => action.textContent),
-    ).toEqual([
+    expect(getAllByTestId(categoryTitles[1].parentElement!, 'action').map((action) => action.textContent)).toEqual([
       '[1] Shield (4 / 4)',
       '[3] Counterspell (2 / 3)',
     ]);
 
     expect(categoryTitles[2].textContent).toBe('Legendary Actions');
-    expect(
-      getAllByTestId(categoryTitles[2].parentElement!, 'action')
-        .map((action) => action.textContent),
-    ).toEqual([
+    expect(getAllByTestId(categoryTitles[2].parentElement!, 'action').map((action) => action.textContent)).toEqual([
       'Detect (1)',
       'Legendary Resistance (2)',
       'Tail Attack (1)',
@@ -145,18 +129,12 @@ describe('renders the correct actions for Tuckerthranx', () => {
     ]);
 
     expect(categoryTitles[3].textContent).toBe('Special Actions');
-    expect(
-      getAllByTestId(categoryTitles[3].parentElement!, 'action')
-        .map((action) => action.textContent),
-    ).toEqual([
+    expect(getAllByTestId(categoryTitles[3].parentElement!, 'action').map((action) => action.textContent)).toEqual([
       'Frightful Presence',
     ]);
 
     expect(categoryTitles[4].textContent).toBe('Start of Turn');
-    expect(
-      getAllByTestId(categoryTitles[4].parentElement!, 'action')
-        .map((action) => action.textContent),
-    ).toEqual([
+    expect(getAllByTestId(categoryTitles[4].parentElement!, 'action').map((action) => action.textContent)).toEqual([
       'Reset Actions for New Turn',
     ]);
   });
