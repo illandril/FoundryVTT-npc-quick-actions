@@ -1,15 +1,18 @@
 .illandril-npc-quick-actions--outer-container:not(.illandril-npc-quick-actions--active) {
   display: none;
 }
+
 .illandril-npc-quick-actions--outer-container {
   position: absolute;
   text-align: center;
   pointer-events: none;
 }
 .illandril-npc-quick-actions--container {
-  display: inline-block;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
   text-align: left;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 2px;
   border: 2px solid rgba(255, 255, 255, 0.9);
   padding: 4px 8px;
@@ -19,8 +22,10 @@
   overflow-y: auto;
 }
 
-.illandril-npc-quick-actions--activationCategory + .illandril-npc-quick-actions--activationCategory {
-  margin-top: 4px;
+.illandril-npc-quick-actions--activationCategory {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .illandril-npc-quick-actions--activationCategory-name {
@@ -30,9 +35,13 @@
 
 .illandril-npc-quick-actions--entry {
   cursor: pointer;
-  opacity: 0.6;
+  opacity: 0.75;
 }
 
 .illandril-npc-quick-actions--entry:hover {
   opacity: 1;
+}
+
+.illandril-npc-quick-actions--no-actions {
+  opacity: 0.65;
 }

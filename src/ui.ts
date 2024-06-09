@@ -8,6 +8,7 @@ const CSS_CONTAINER = module.cssPrefix.child('container');
 const CSS_ACTIVATION_CATEGORY = module.cssPrefix.child('activationCategory');
 const CSS_ACTIVATION_CATEGORY_NAME = module.cssPrefix.child('activationCategory-name');
 const CSS_ENTRY = module.cssPrefix.child('entry');
+const CSS_NO_ACTIONS = module.cssPrefix.child('no-actions');
 
 const actionsOuterContainer = document.createElement('div');
 actionsOuterContainer.classList.add(CSS_OUTER_CONTAINER);
@@ -41,6 +42,20 @@ const createCategoryContainer = (activationCategory: ActivationCategory) => {
   return activationCategoryContainer;
 };
 
+const isShownForActorType = (actor: dnd5e.documents.Actor5e) => {
+  if (actor.type === 'character') {
+    return ShowForPCActors.get();
+  }
+  if (actor.type === 'npc') {
+    return ShowForNPCActors.get();
+  }
+  if (actor.type === 'vehicle') {
+    return ShowForVehicleActors.get();
+  }
+  module.logger.debug('isShownForActorType saw a type it does not recognize', actor.type);
+  return true;
+};
+
 export const show = (token?: Token | null) => {
   hide();
   module.logger.debug('show()', token);
@@ -49,35 +64,30 @@ export const show = (token?: Token | null) => {
     return false;
   }
 
-  const actor = token.actor;
-  if (actor.type === 'character' && !ShowForPCActors.get()) {
-    module.logger.debug('show() -> false, not shown for actor.type === character');
-    return false;
-  }
-  if (actor.type === 'npc' && !ShowForNPCActors.get()) {
-    module.logger.debug('show() -> false, not shown for actor.type === npc');
-    return false;
-  }
-  if (actor.type === 'vehicle' && !ShowForVehicleActors.get()) {
-    module.logger.debug('show() -> false, not shown for actor.type === vehicle');
+  const actor = token.actor as dnd5e.documents.Actor5e;
+  if (!isShownForActorType(actor)) {
+    module.logger.debug('show() -> false, not shown for actor.type', actor.type);
     return false;
   }
 
   const actions = get(actor);
   if (!actions || actions.length === 0) {
-    module.logger.debug('show() -> false, no actions');
-    return false;
-  }
-
-  module.logger.debug('show() -> true', actions);
-  let lastActivationCategory: ActivationCategory | null = null;
-  let activationCategoryContainer: HTMLElement | null = null;
-  for (const action of actions) {
-    if (action.activationCategory !== lastActivationCategory || !activationCategoryContainer) {
-      lastActivationCategory = action.activationCategory;
-      activationCategoryContainer = createCategoryContainer(action.activationCategory);
+    module.logger.debug('show() -> true... but no actions');
+    const noActions = document.createElement('div');
+    noActions.classList.add(CSS_NO_ACTIONS);
+    noActions.appendChild(document.createTextNode(module.localize('no-actions')));
+    actionsContainer.appendChild(noActions);
+  } else {
+    module.logger.debug('show() -> true', actions);
+    let lastActivationCategory: ActivationCategory | null = null;
+    let activationCategoryContainer: HTMLElement | null = null;
+    for (const action of actions) {
+      if (action.activationCategory !== lastActivationCategory || !activationCategoryContainer) {
+        lastActivationCategory = action.activationCategory;
+        activationCategoryContainer = createCategoryContainer(action.activationCategory);
+      }
+      activationCategoryContainer.appendChild(getActionRow(action));
     }
-    activationCategoryContainer.appendChild(getActionRow(action));
   }
 
   repositionActionsOuterContainer(token);

@@ -1,6 +1,6 @@
 import * as ItemSystem from './item-system';
 import module from './module';
-import { ShowZeroUsesRemainActions, showUnequippedItems, showUnpreparedSpells } from './settings';
+import { ShowOnlyFavorites, ShowZeroUsesRemainActions, showUnequippedItems, showUnpreparedSpells } from './settings';
 
 function caseInsensitiveCompare(a: string, b: string) {
   return a.localeCompare(b, undefined, { sensitivity: 'base' });
@@ -8,8 +8,8 @@ function caseInsensitiveCompare(a: string, b: string) {
 
 export type Action = {
   roll: () => void;
-  actor: Actor;
-  item?: Item;
+  actor: dnd5e.documents.Actor5e;
+  item?: dnd5e.documents.Item5e;
   name: string;
   activationCategory: ActivationCategory;
   typeCategory: TypeCategory;
@@ -17,14 +17,14 @@ export type Action = {
   newTurnReset?: (() => Promise<void>) | null;
 };
 
-export const get = (actor: Actor) => {
+export const get = (actor: dnd5e.documents.Actor5e) => {
   if (!actor) {
     return null;
   }
   const newTurnResets: (() => Promise<void>)[] = [];
   const actions: Action[] = [];
   for (const item of actor.items) {
-    const action = getAction(actor, item as dnd5e.documents.Item5e);
+    const action = getAction(actor, item);
     if (action) {
       actions.push(action);
       if (action.newTurnReset) {
@@ -236,7 +236,29 @@ const getNewTurnReset = (item: dnd5e.documents.Item5e, formula: string, recharge
     void resetRoll.toMessage({ flavor, speaker: { actor: item.actor || undefined } });
   };
 };
-const getAction = (actor: Actor, item: dnd5e.documents.Item5e): Action | null => {
+
+const hasNoFavoritesOrIsInFavorites = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e): boolean => {
+  if (!('favorites' in actor.system)) {
+    return true;
+  }
+  if (!actor.system.favorites?.length) {
+    return true;
+  }
+
+  for (const favorite of actor.system.favorites) {
+    if (favorite.type === 'item') {
+      if (favorite.id.endsWith(`.${item.id}`)) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+const getAction = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e): Action | null => {
+  if (ShowOnlyFavorites.get() && !hasNoFavoritesOrIsInFavorites(actor, item)) {
+    return null;
+  }
   module.logger.debug('getAction()', actor, item);
   const roll = () => {
     void item.use();

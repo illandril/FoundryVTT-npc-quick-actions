@@ -28,6 +28,10 @@ const showFor = (
   return showForNPC.get();
 };
 
+export const ShowOnlyFavorites = module.settings.register('showOnlyFavorites', Boolean, false, {
+  hasHint: true,
+});
+
 const ShowUnpreparedNPCSpells = module.settings.register('showUnpreparedNPCSpells', Boolean, false, {
   hasHint: true,
 });

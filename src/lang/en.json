@@ -7,6 +7,10 @@
       },
       "minimumRole.label": "Minimum Role for Quick Actions",
       "minimumRole.hint": "The Quick Actions menu will show when right-clicking on tokens owned by the user if they have the selected Role or greater. Note: GMs \"own\" every token.",
+      "showOnlyFavorites": {
+        "label": "Show Favorites Only",
+        "hint": "If checked, for characters that have at least one 'Favorite', only actions for items in their favorites will be displayed."
+      },
       "showUnpreparedNPCSpells.label": "Show Unprepared NPC Spells",
       "showUnpreparedNPCSpells.hint": "If checked, spells that have the \"Prepared\" Spell Preparation Mode that are not marked as \"Prepared\" will be shown in the Quick Actions menu for \"Player Character\" type actors without a player owner. (Note: these spells will appear in the Quck Actions menu for \"Non-Player Character\" type actors regardless of if they have a player owner or not and regardless of this setting.)",
       "showUnpreparedPCSpells.label": "Show Unprepared PC Spells",
@@ -24,6 +28,7 @@
       "showForVehicleActors.label": "Show for Vehicle Actors",
       "showForVehicleActors.hint": "If checked, the Quick Actions will show for Vehicle actors."
     },
+    "no-actions": "No available actions",
     "activation_action": "Actions",
     "activation_bonus": "Bonus Actions",
     "activation_reaction": "Reactions",
