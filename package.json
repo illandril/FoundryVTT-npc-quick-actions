@@ -52,7 +52,7 @@
     "jest-fail-on-console": "^3.3.0",
     "jquery": "^3.7.1",
     "npm-run-all2": "^6.2.2",
-    "rimraf": "^5.0.7",
+    "rimraf": "^6.0.1",
     "rollup": "^4.19.0",
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-scss": "^4.0.0",
