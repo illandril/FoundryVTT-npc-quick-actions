@@ -102,28 +102,41 @@ export const showTokenActions = (token?: Token | null) => {
 };
 
 const repositionActionsOuterContainer = (token: Token) => {
-  const lrOffset = 200;
-  const tokenWidth = token.w * (game.canvas.stage?.scale?.x ?? 1);
-  const leftOffset = Math.floor(token.worldTransform.tx - lrOffset);
-  const rightOffset = Math.ceil(token.worldTransform.tx + tokenWidth + lrOffset);
-  let bottomOffset = Number.NEGATIVE_INFINITY;
-  // Foundry doesn't always have the token HUD position calculated yet, so wait a tick
-  setTimeout(() => { bottomOffset = getTokenHUDTop() - 6; }, 0);
-  actionsOuterContainer.style.left = `${leftOffset}px`;
-  actionsOuterContainer.style.right = `calc(100% - ${rightOffset}px)`;
-  actionsOuterContainer.style.top = '';
-  actionsOuterContainer.style.bottom = `calc(100% - ${bottomOffset}px)`;
-  actionsOuterContainer.classList.add(CSS_ACTIVE);
+    // Phase 1: Calculate coordinates that DO NOT depend on the HUD's final position
+    const lrOffset = 200;
 
-  const rect = actionsOuterContainer.getBoundingClientRect();
-  // If the box is going off the top of the screen, move it down relative to the tokenHUD element so that it appears underneath
-  if (rect && rect.top <= 0) {
-    let topOffset = Number.NEGATIVE_INFINITY;
-    // Foundry doesn't always have the token HUD position calculated yet, so wait a tick
-    setTimeout(() => { topOffset = getTokenHUDBottom() + 6; }, 0);
-    actionsOuterContainer.style.bottom = '';
-    actionsOuterContainer.style.top = `${topOffset}px`;
-  }
+    // Get world coordinates and dimensions of the token
+    const tokenWidth = token.w * (game.canvas.stage?.scale?.x ?? 1);
+    const leftOffset = Math.floor(token.worldTransform.tx - lrOffset);
+    const rightOffset = Math.ceil(token.worldTransform.tx + tokenWidth + lrOffset);
+
+    // Apply the horizontal positioning immediately
+    actionsOuterContainer.style.left = `${leftOffset}px`;
+    actionsOuterContainer.style.right = `calc(100% - ${rightOffset}px)`;
+    actionsOuterContainer.classList.add(CSS_ACTIVE);
+
+    // Phase 2: Defer vertical positioning until the HUD coordinates are stable
+    // Use setTimeout(0) or requestAnimationFrame for stable coordinates
+    setTimeout(() => {
+        // 1. Calculate the desired default position (above the HUD)
+        const hudTop = getTokenHUDTop();
+        let bottomOffset = hudTop - 6;
+
+        // 2. Apply the default positioning (Above Token HUD)
+        actionsOuterContainer.style.top = ''; // Clear 'top' style
+        actionsOuterContainer.style.bottom = `calc(100% - ${bottomOffset}px)`;
+
+        // 3. Check for boundary collision (runs AFTER position is set)
+        const rect = actionsOuterContainer.getBoundingClientRect();
+
+        // If the box is going off the top of the screen (rect.top <= 0), move it underneath
+        if (rect && rect.top <= 0) {
+            const hudBottom = getTokenHUDBottom();
+            const topOffset = hudBottom + 6;
+            actionsOuterContainer.style.bottom = '';
+            actionsOuterContainer.style.top = `${topOffset}px`;
+        }
+    }, 0);
 };
 
 function getTokenHUDTop() {
