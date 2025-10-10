@@ -4,8 +4,8 @@ import * as ui from './ui';
 let shownToken: Token | null = null;
 
 Hooks.on('init', () => {
-  const originalClear = TokenHUD.prototype.clear;
-  TokenHUD.prototype.clear = function () {
+  const originalClear = foundry.applications.hud.TokenHUD.prototype.clear;
+  foundry.applications.hud.TokenHUD.prototype.clear = function () {
     originalClear.call(this);
     shownToken = null;
     ui.hide();

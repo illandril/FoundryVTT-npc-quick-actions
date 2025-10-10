@@ -30,7 +30,7 @@ describe('renders the correct actions for Tuckerthranx', () => {
       'renderTokenHUD',
       {
         object: tuckerthranx,
-      } as TokenHUD,
+      } as foundry.applications.hud.TokenHUD,
       null as unknown as JQuery<HTMLElement>,
     );
 
@@ -87,7 +87,7 @@ describe('renders the correct actions for Tuckerthranx', () => {
       'renderTokenHUD',
       {
         object: tuckerthranx,
-      } as TokenHUD,
+      } as foundry.applications.hud.TokenHUD,
       null as unknown as JQuery<HTMLElement>,
     );
 

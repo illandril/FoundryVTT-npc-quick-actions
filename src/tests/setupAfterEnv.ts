@@ -11,12 +11,16 @@ class MockTokenHUD {
   }
 }
 
-(
-  globalThis as unknown as {
-    // biome-ignore lint/style/useNamingConvention: FoundryVTT's name, not ours
-    TokenHUD: typeof MockTokenHUD;
-  }
-).TokenHUD = MockTokenHUD;
+(globalThis as any).foundry = {
+  ...((globalThis as any).foundry || {}),
+  applications: {
+    ...((globalThis as any).foundry?.applications || {}),
+    hud: {
+      ...((globalThis as any).foundry?.applications?.hud || {}),
+      TokenHUD: MockTokenHUD,
+    },
+  },
+};
 
 (
   game.user as {
