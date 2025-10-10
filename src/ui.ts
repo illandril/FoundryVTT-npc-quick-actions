@@ -1,5 +1,5 @@
 import module from './module';
-import { type Action, type ActivationCategory, get } from './quick-actions';
+import { type Action, type ActivationCategory, getTokenActions } from './quick-actions';
 import { MinimumRole, ShowForNPCActors, ShowForPCActors, ShowForVehicleActors } from './settings';
 
 const CSS_ACTIVE = module.cssPrefix.child('active');
@@ -70,7 +70,7 @@ export const showTokenActions = (token?: Token | null) => {
     return false;
   }
 
-  const actions = get(actor);
+  const actions = getTokenActions(actor);
   if (!actions || actions.length === 0) {
     module.logger.debug('show() -> true... but no actions');
     const noActions = document.createElement('div');

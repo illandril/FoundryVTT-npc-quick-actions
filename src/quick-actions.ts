@@ -17,7 +17,7 @@ export type Action = {
   newTurnReset?: (() => Promise<void>) | null;
 };
 
-export const get = (actor: dnd5e.documents.Actor5e) => {
+export const getTokenActions = (actor: dnd5e.documents.Actor5e) => {
   if (!actor) {
     return null;
   }
