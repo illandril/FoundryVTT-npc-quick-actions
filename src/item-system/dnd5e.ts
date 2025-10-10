@@ -115,11 +115,11 @@ function calculateSpellUses(itemData: dnd5e.documents.ItemSystemData.Spell, acto
   const actorData = actor.system as dnd5e.documents.ActorSystemData.Character;
   let available: number | null = null;
   let maximum: number | null = null;
-  const preparationMode = itemData.preparation?.mode;
-  if (preparationMode === 'pact') {
+  const preparationMethod = itemData.method;
+  if (preparationMethod === 'pact') {
     available = actorData.spells?.pact?.value ?? 0;
     maximum = actorData.spells?.pact?.max ?? 0;
-  } else if (preparationMode === 'innate' || preparationMode === 'atwill') {
+  } else if (preparationMethod === 'innate' || preparationMethod === 'atwill') {
     // None
   } else {
     const level = itemData.level ?? 0;

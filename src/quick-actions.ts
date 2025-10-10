@@ -149,14 +149,14 @@ const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcat
   let subcategory = 0;
   const spellData = item.system as dnd5e.documents.ItemSystemData.Spell;
   let prefix: string;
-  switch (spellData.preparation?.mode ?? 'prepared') {
+  switch (spellData.method ?? 'prepared') {
     case 'pact':
       prefix = module.localize('spell-abbr.pact');
       subcategory = 0.5;
       break;
     // biome-ignore lint/suspicious/noFallthroughSwitchClause: 'prepared' intentionally falls through
     case 'prepared':
-      if (item.actor?.type !== 'npc' && !spellData.preparation?.prepared) {
+      if (item.actor?.type !== 'npc' && !spellData.prepared) {
         if (!showUnpreparedSpells(item.actor)) {
           return null;
         }
