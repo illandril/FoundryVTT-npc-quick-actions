@@ -59,6 +59,12 @@ const isShownForActorType = (actor: dnd5e.documents.Actor5e) => {
 export const showTokenActions = (token?: Token | null) => {
   hideTokenActions();
   module.logger.debug('showTokenActions()', token);
+
+  if (!game?.canvas?.hud?.token?.element?.children) {
+    module.logger.debug('showTokenActions() -> false, no token HUD');
+    return false;
+  }
+
   if (!(token?.document?.isOwner && game.user?.hasRole(MinimumRole.get()))) {
     module.logger.debug('show() -> false, not owner or insufficient role');
     return false;
@@ -100,7 +106,9 @@ const repositionActionsOuterContainer = (token: Token) => {
   const tokenWidth = token.w * (game.canvas.stage?.scale?.x ?? 1);
   const leftOffset = Math.floor(token.worldTransform.tx - lrOffset);
   const rightOffset = Math.ceil(token.worldTransform.tx + tokenWidth + lrOffset);
-  const bottomOffset = getTokenHUDTop() - 6;
+  let bottomOffset = Number.NEGATIVE_INFINITY;
+  // Foundry doesn't always have the token HUD position calculated yet, so wait a tick
+  setTimeout(() => { bottomOffset = getTokenHUDTop() - 6; }, 0);
   actionsOuterContainer.style.left = `${leftOffset}px`;
   actionsOuterContainer.style.right = `calc(100% - ${rightOffset}px)`;
   actionsOuterContainer.style.top = '';
@@ -108,9 +116,11 @@ const repositionActionsOuterContainer = (token: Token) => {
   actionsOuterContainer.classList.add(CSS_ACTIVE);
 
   const rect = actionsOuterContainer.getBoundingClientRect();
+  // If the box is going off the top of the screen, move it down relative to the tokenHUD element so that it appears underneath
   if (rect && rect.top <= 0) {
-    // If the box is going off the top of the screen, move it down relative to the tokenHUD element so that it appears underneath
-    const topOffset = getTokenHUDBottom() + 6;
+    let topOffset = Number.NEGATIVE_INFINITY;
+    // Foundry doesn't always have the token HUD position calculated yet, so wait a tick
+    setTimeout(() => { topOffset = getTokenHUDBottom() + 6; }, 0);
     actionsOuterContainer.style.bottom = '';
     actionsOuterContainer.style.top = `${topOffset}px`;
   }
@@ -119,30 +129,31 @@ const repositionActionsOuterContainer = (token: Token) => {
 function getTokenHUDTop() {
   // Why not just get the offset().top of the token HUD element, or the columns?
   // Because the columns flow outside the HUD element, and often have lots of empty space in them
-  const tokenHUDColumns = game.canvas.hud?.token?.element?.children();
-  const tokenHUDElements = tokenHUDColumns?.children();
-  let bestTop = 99999;
-  tokenHUDElements?.each((_index, child) => {
-    bestTop = Math.min(bestTop, $(child).offset()?.top ?? bestTop);
-  });
+  let bestTop = Number.POSITIVE_INFINITY;
+  const collection = game?.canvas?.hud?.token?.element?.children;
+  if (collection?.length) {
+    Array.from(collection).forEach(element => {
+        const rect = element.getBoundingClientRect();
+        bestTop = Math.min(bestTop, rect.top ?? bestTop);
+    });
+  }
+
+  module.logger.debug('getTokenHUDTop() ->', bestTop);
   return bestTop;
 }
 
 function getTokenHUDBottom() {
   // Why not just get the offset().top + outerHeight() of the token HUD element, or the columns?
   // Because the columns flow outside the HUD element, and often have lots of empty space in them
-  const tokenHUDColumns = game.canvas.hud?.token?.element?.children();
-  const tokenHUDElements = tokenHUDColumns?.children();
-  let bestBottom = 0;
-  tokenHUDElements?.each((_index, child) => {
-    const jqChild = $(child);
-    const top = jqChild.offset()?.top;
-    const height = jqChild.outerHeight();
-    if (typeof top === 'number' && typeof height === 'number') {
-      const bottom = top + height;
-      bestBottom = Math.max(bestBottom, bottom);
-    }
-  });
+  let bestBottom = Number.NEGATIVE_INFINITY;
+  const collection = game?.canvas?.hud?.token?.element?.children;
+  if (collection?.length) {
+    Array.from(collection).forEach(element => {
+        const rect = element.getBoundingClientRect();
+        bestBottom = Math.max(bestBottom, rect.bottom ?? bestBottom);
+    });
+  }
+  module.logger.debug('getTokenHUDBottom() ->', bestBottom);
   return bestBottom;
 }
 
