@@ -292,7 +292,7 @@ const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents
         : [];
         
   for (const [activityId, activity] of activities) {
-      const activationType = activity.activation?.type;
+      const activationType = activity?.activation?.type;
       const currentCategory = getActivationCategoryFromType(activationType);
 
       if (!currentCategory) continue; // Skip non-action activities

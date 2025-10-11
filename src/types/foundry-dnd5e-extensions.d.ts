@@ -98,7 +98,7 @@ declare global {
         type: string;
         actor: Actor5e | null;
         system: ItemSystemData | any;
-        use?: (options?: any) => Promise<void> | void;
+        use?: (options?: any) => Promise<void>;
         items?: any;
         [key: string]: any;
       }
