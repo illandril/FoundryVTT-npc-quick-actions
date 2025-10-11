@@ -285,8 +285,8 @@ const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents
   }
   
   // 4. Find the highest priority viable activity
-  let bestActivationCategory: ActivationCategory | null = null;
-  let bestActivityId: string | null = null;
+  let itemActivationCategory: ActivationCategory | null = null;
+  let itemActivityId: string | null = null;
   
   const activities = item.system.activities instanceof foundry.utils.Collection 
         ? item.system.activities.entries()
@@ -300,38 +300,32 @@ const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents
           continue; // Skip non-action activities
       }
 
-      // Prioritize the category with the lower sort number
-      if (!bestActivationCategory || currentCategory.sort < bestActivationCategory.sort) {
-          bestActivationCategory = currentCategory;
-          bestActivityId = activityId;
-      }
+      itemActivationCategory = currentCategory;
+      itemActivityId = activityId;
+      break;
   }
 
   // 5. If no viable activity was found, return nothing
-  if (!bestActivityId || !bestActivationCategory) {
-      console.error('getActionsForItem() - item had no viable activities after filtering.');
+  if (!itemActivityId || !itemActivationCategory) {
+      module.logger.debug('getActionsForItem() - item had no viable activities after filtering.');
       return [];
   }
   
   // 6. Construct the single Action
-  const roll = () => {
-      // Roll using the highest priority activity found
-      void item.use(bestActivityId!); 
-  };
-
+  const roll = () => { void item.use(itemActivityId!); };
   const action: Action = {
       roll,
       actor,
       item,
-      activityId: bestActivityId, // Store the chosen activity ID
+      activityId: itemActivityId, // Store the chosen activity ID
       name: finalName,
-      activationCategory: bestActivationCategory, // Store the chosen category
+      activationCategory: itemActivationCategory, // Store the chosen category
       ...typeCategoryData,
       newTurnReset: null,
   };
-
-  module.logger.debug('getActionsForItem() added SINGLE action for item, using activity:', bestActivityId, action);
-
+  
+  module.logger.debug('getActionsForItem() added SINGLE action for item, using activity:', itemActivityId, action);
+  
   return [action]; // Return an array with only one action
 };
 
