@@ -17,19 +17,21 @@ export type Action = {
   newTurnReset?: (() => Promise<void>) | null;
 };
 
+// NOTE: The getAction function must be defined for getTokenActions to work, 
+// but based on your request, I will only include the structure for now
+// and ensure the dependencies are clear.
+
 export const getTokenActions = (actor: dnd5e.documents.Actor5e) => {
   if (!actor) {
     return null;
   }
-  const newTurnResets: (() => Promise<void>)[] = [];
+  // Removed newTurnResets variable
   const actions: Action[] = [];
   for (const item of actor.items) {
     const action = getAction(actor, item);
     if (action) {
       actions.push(action);
-      if (action.newTurnReset) {
-        newTurnResets.push(action.newTurnReset);
-      }
+      // Removed newTurnReset pushing logic
     }
   }
   actions.sort((a, b) => {
@@ -47,40 +49,9 @@ export const getTokenActions = (actor: dnd5e.documents.Actor5e) => {
     }
     return caseInsensitiveCompare(a.name, b.name);
   });
-  const maxLegendaryActions = foundry.utils.getProperty(actor.system, 'resources.legact.max');
-  const currentLegendaryActions = foundry.utils.getProperty(actor.system, 'resources.legact.value');
-  if (
-    typeof maxLegendaryActions === 'number' &&
-    typeof currentLegendaryActions === 'number' &&
-    maxLegendaryActions > currentLegendaryActions
-  ) {
-    newTurnResets.push(async () => {
-      if (!game.userId) {
-        throw new Error('game.userId was not set - this is unexpected');
-      }
 
-      ChatMessage.create({
-        whisper: [game.userId],
-        content: module.localize('legendary-actions-reset'),
-        speaker: { actor },
-      });
-      await actor.update({ 'system.resources.legact.value': maxLegendaryActions });
-    });
-  }
-  if (newTurnResets.length > 0) {
-    actions.push({
-      roll: () => {
-        for (const newTurnReset of newTurnResets) {
-          void newTurnReset();
-        }
-      },
-      actor,
-      name: module.localize('reset-for-new-turn'),
-      activationCategory: ACTIVATION_CATEGORY.newTurn,
-      typeCategory: TYPE_CATEGORY.other,
-      subcategory: 0,
-    });
-  }
+  // Removed Legendary Actions logic
+  // Removed "Reset for New Turn" Action logic
 
   return actions;
 };
@@ -222,20 +193,7 @@ const getTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory
   return { typeCategory, subcategory };
 };
 
-const getNewTurnReset = (item: dnd5e.documents.Item5e, formula: string, rechargeValue: number) => {
-  return async () => {
-    const resetRoll = new Roll(formula);
-    await resetRoll.evaluate({ async: true });
-    let flavor = `${item.name} - ${module.localize('recharge-roll')}: `;
-    if (resetRoll.total >= rechargeValue) {
-      void item.update({ 'system.recharge.charged': true });
-      flavor += module.localize('recharge-success');
-    } else {
-      flavor += module.localize('recharge-fail');
-    }
-    void resetRoll.toMessage({ flavor, speaker: { actor: item.actor || undefined } });
-  };
-};
+// Removed getNewTurnReset function entirely
 
 const hasNoFavoritesOrIsInFavorites = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e): boolean => {
   if (!('favorites' in actor.system)) {
@@ -288,10 +246,8 @@ const getAction = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e)
     module.logger.debug('getAction() - name', name);
 
     const recharge = item.type === 'feat' ? (item.system as dnd5e.documents.ItemSystemData.Feat).recharge : null;
-    if (recharge && typeof recharge.value === 'number' && !recharge.charged) {
-      module.logger.debug('getAction() - has newTurnReset');
-      newTurnReset = getNewTurnReset(item, '1d6', recharge.value);
-    } else if (uses.available === 0 && !ShowZeroUsesRemainActions.get()) {
+    // RECHARGE LOGIC REMOVED: Since getNewTurnReset is removed, we just check for zero uses
+    if (uses.available === 0 && !ShowZeroUsesRemainActions.get()) {
       return null;
     }
   }
@@ -302,7 +258,8 @@ const getAction = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e)
     name,
     activationCategory,
     ...typeCategory,
-    newTurnReset,
+    // newTurnReset is always null or undefined now, but kept for type compatibility
+    newTurnReset, 
   };
   module.logger.debug('getAction() return', action);
   return action;
