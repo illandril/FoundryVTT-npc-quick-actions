@@ -56,6 +56,16 @@ const TYPE_CATEGORY = {
   spell: { sort: 6 },
 };
 
+/**
+ * Maps Foundry's item 'type' strings to the internal TypeCategory objects.
+ */
+const ITEM_TYPE_MAPPING: Record<string, TypeCategory> = {
+    weapon: TYPE_CATEGORY.weapon,
+    equipment: TYPE_CATEGORY.equipment,
+    consumable: TYPE_CATEGORY.consumable,
+    // Note: 'feat' and 'spell' are handled directly in getTypeCategory
+};
+
 // --- Category Logic Helpers ---
 
 /**
@@ -79,89 +89,106 @@ const getActivationCategoryFromType = (activationType: string | undefined): Acti
     return activationMap[activationType] ?? null;
 };
 
+// --- Spell Type Helpers (Retained from previous cleanup) ---
+
+/**
+ * Checks if a prepared spell should be filtered out based on actor type and settings.
+ */
+const shouldFilterUnpreparedSpell = (item: Item, spellData: dnd5e.documents.ItemSystemData.Spell): boolean => {
+    return (
+        item.actor?.type !== 'npc' && 
+        !spellData.prepared && 
+        !showUnpreparedSpells(item.actor)
+    );
+};
+
+/**
+ * Calculates the subcategory and prefix for level-based spells (prepared/always).
+ */
+const getSpellLevelCategory = (spellData: dnd5e.documents.ItemSystemData.Spell): Pick<Action, 'subcategory' | 'typeCategory'> => {
+    const subcategory = spellData.level ?? 0;
+    let prefix: string;
+
+    if (subcategory === 0) {
+        prefix = module.localize('spell-abbr.cantrip');
+    } else {
+        prefix = `${spellData.level}`;
+    }
+
+    return {
+        subcategory,
+        typeCategory: {
+            ...TYPE_CATEGORY.spell,
+            prefix: `[${prefix}] `,
+        },
+    };
+};
+
+/**
+ * Calculates the subcategory and prefix for non-level-based spell methods (pact, innate, atwill, unknown).
+ */
+const getSpellMethodCategory = (method: string): Pick<Action, 'subcategory' | 'typeCategory'> => {
+    const methodMap: Record<string, { subcategory: number, prefixKey: string }> = {
+        'pact': { subcategory: 0.5, prefixKey: 'spell-abbr.pact' },
+        'innate': { subcategory: -10, prefixKey: 'spell-abbr.innate' },
+        'atwill': { subcategory: -20, prefixKey: 'spell-abbr.atwill' },
+    };
+
+    const data = methodMap[method];
+
+    const subcategory = data?.subcategory ?? -30;
+    const prefixKey = data?.prefixKey ?? 'spell-abbr.unknown';
+    
+    const prefix = module.localize(prefixKey);
+
+    return {
+        subcategory,
+        typeCategory: {
+            ...TYPE_CATEGORY.spell,
+            prefix: `[${prefix}] `,
+        },
+    };
+};
 
 /**
  * Determines the specific TypeCategory and subcategory for spell items.
- * Applies filtering for unprepared spells based on settings.
  * @param item The Item5e document (assumed to be a spell).
  * @returns Category and subcategory data, or null if the spell is filtered out.
  */
 const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
-  const spellData = item.system as dnd5e.documents.ItemSystemData.Spell;
-  const method = spellData.method ?? 'prepared';
-  let subcategory: number;
-  let prefix: string;
+    const spellData = item.system as dnd5e.documents.ItemSystemData.Spell;
+    const method = spellData.method ?? 'prepared';
 
-  // --- Phase 1: Handle Special Methods and Filtering ---
-  
-  // Use a map for special, non-level-based methods
-  const methodMap: Record<string, { subcategory: number, prefixKey: string }> = {
-    'pact': { subcategory: 0.5, prefixKey: 'spell-abbr.pact' },
-    'innate': { subcategory: -10, prefixKey: 'spell-abbr.innate' },
-    'atwill': { subcategory: -20, prefixKey: 'spell-abbr.atwill' },
-  };
-
-  if (method === 'prepared') {
-    // Handle the specific filtering logic for prepared spells
-    if (item.actor?.type !== 'npc' && !spellData.prepared) {
-      if (!showUnpreparedSpells(item.actor)) {
-        return null; // Filtered out
-      }
+    if (method === 'prepared') {
+        if (shouldFilterUnpreparedSpell(item, spellData)) {
+            return null;
+        }
+        return getSpellLevelCategory(spellData);
+    } 
+    
+    if (method === 'always') {
+        return getSpellLevelCategory(spellData);
     }
-    // FALLTHROUGH to Phase 2: Calculate level/cantrip (handled by default/level logic below)
-  } else if (methodMap[method]) {
-    // Handle specific methods found in the map
-    const data = methodMap[method];
-    subcategory = data.subcategory;
-    prefix = module.localize(data.prefixKey);
-  } else if (method === 'always') {
-    // FALLTHROUGH to Phase 2: Calculate level/cantrip (handled by default/level logic below)
-  } else {
-    // Handle true unknown/default cases
-    subcategory = -30;
-    prefix = module.localize('spell-abbr.unknown');
-  }
-
-  // --- Phase 2: Calculate Level-Based Subcategory (Applies to prepared and always) ---
-  
-  if (method === 'prepared' || method === 'always') {
-    subcategory = spellData.level ?? 0;
-    if (subcategory === 0) {
-      prefix = module.localize('spell-abbr.cantrip');
-    } else {
-      prefix = `${spellData.level}`;
-    }
-  }
-
-  // If subcategory/prefix were not set (i.e., by Phase 1 for unknown methods), 
-  // they would have been set in the final else block above.
-
-  return {
-    subcategory,
-    typeCategory: {
-      ...TYPE_CATEGORY.spell,
-      prefix: `[${prefix}] `,
-    },
-  };
+    
+    // Handles 'pact', 'innate', 'atwill', and unknown fallbacks
+    return getSpellMethodCategory(method);
 };
+
 
 /**
  * Determines the TypeCategory and subcategory for non-feat, non-spell items.
  * Applies filtering for unequipped items based on settings.
- * @param item The Item5e document.
+ *
+ * (Refactored to use the consolidated ITEM_TYPE_MAPPING.)
+ * * @param item The Item5e document.
  * @returns Category and subcategory data, or null if the item is filtered out.
  */
 const getDefaultTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
     const itemType = item.type;
     const subcategory = 0;
-
-    const typeMap: Record<string, TypeCategory> = {
-        weapon: TYPE_CATEGORY.weapon,
-        equipment: TYPE_CATEGORY.equipment,
-        consumable: TYPE_CATEGORY.consumable,
-    };
     
-    const typeCategory = typeMap[itemType] ?? TYPE_CATEGORY.other;
+    // Use the consolidated mapping, falling back to 'other'
+    const typeCategory = ITEM_TYPE_MAPPING[itemType] ?? TYPE_CATEGORY.other;
 
     // Apply filtering for unequipped items (only for non-NPCs)
     if (item.actor?.type !== 'npc' && !foundry.utils.getProperty(item.system, 'equipped')) {
@@ -200,7 +227,7 @@ const getTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory
  */
 const hasNoFavoritesOrIsInFavorites = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e): boolean => {
   // Check 1: If the actor system doesn't support favorites, always include.
-  if (!('favorites' in actor.system)) return true;  
+  if (!('favorites' in actor.system)) return true;
 
   // Check 2: If there are no favorites defined, always include.
   const favorites = actor.system.favorites;
