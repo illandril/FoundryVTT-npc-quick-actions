@@ -13,7 +13,8 @@ function caseInsensitiveCompare(a: string, b: string) {
 export type Action = {
   roll: () => void;
   actor: dnd5e.documents.Actor5e;
-  item?: dnd5e.documents.Item5e;
+  item: dnd5e.documents.Item5e;
+  activityId: string; // Identifier for the specific activity being used (the prioritized one)
   name: string;
   activationCategory: ActivationCategory;
   typeCategory: TypeCategory;
@@ -52,12 +53,12 @@ const TYPE_CATEGORY = {
 // --- Category Logic Helpers ---
 
 /**
- * Uses a map lookup to convert the item's activation type string to an ActivationCategory object.
- * This replaces the verbose switch statement with a single lookup and null check.
+ * Uses a map lookup to convert the activation type string (from an activity) to an ActivationCategory object.
  */
-const getActivationCategory = (item: Item): ActivationCategory | null => {
-  const activationType = foundry.utils.getProperty(item.system, 'activation.type');
-  if (activationType) {
+const getActivationCategoryFromType = (activationType: string | undefined): ActivationCategory | null => {
+    if (!activationType) {
+        return null;
+    }
     const activationMap: Record<string, ActivationCategory> = {
         action: ACTIVATION_CATEGORY.action,
         bonus: ACTIVATION_CATEGORY.bonus,
@@ -67,11 +68,15 @@ const getActivationCategory = (item: Item): ActivationCategory | null => {
         crew: ACTIVATION_CATEGORY.crew,
         special: ACTIVATION_CATEGORY.special,
     };
-    // The keys 'minute', 'hour', and 'day' will correctly fall to 'null'
     return activationMap[activationType] ?? null;
-  }
-  return null;
 };
+
+// Kept for consistency, though not strictly used in the new item-to-action logic
+const getActivationCategory = (item: Item): ActivationCategory | null => {
+  const activationType = foundry.utils.getProperty(item.system, 'activation.type');
+  return getActivationCategoryFromType(activationType);
+};
+
 
 const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
   let subcategory = 0;
@@ -122,20 +127,17 @@ const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcat
 
 /**
  * Handles non-feat and non-spell item types (weapon, equipment, consumable, other).
- * Contains the logic for filtering unequipped items.
  */
 const getDefaultTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
     const itemType = item.type;
     const subcategory = 0;
 
-    // Use a map for the item type lookup
     const typeMap: Record<string, TypeCategory> = {
         weapon: TYPE_CATEGORY.weapon,
         equipment: TYPE_CATEGORY.equipment,
         consumable: TYPE_CATEGORY.consumable,
     };
     
-    // Get category from map, or fall back to 'other'
     const typeCategory = typeMap[itemType] ?? TYPE_CATEGORY.other;
 
     // Apply filtering for unequipped items (only for non-NPCs)
@@ -203,7 +205,6 @@ const getActionNameWithUses = (item: dnd5e.documents.Item5e, baseName: string): 
         if (!ShowZeroUsesRemainActions.get()) {
             return null;
         }
-        // Retain the item if ShowZeroUsesRemainActions is true
     }
 
     let name = baseName;
@@ -218,25 +219,20 @@ const getActionNameWithUses = (item: dnd5e.documents.Item5e, baseName: string): 
 
 
 /**
- * Core function to attempt to build an Action object for a given Item.
+ * Creates a single action for the item, choosing the highest priority (lowest sort) viable activity.
  */
-const getAction = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e): Action | null => {
+const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e): Action[] => {
   // 1. Filter by Favorites Setting
   if (ShowOnlyFavorites.get() && !hasNoFavoritesOrIsInFavorites(actor, item)) {
-    return null;
+    return [];
   }
-  module.logger.debug('getAction()', actor, item);
+  module.logger.debug('getActionsForItem()', actor, item);
   
-  // 2. Determine Categories
-  const activationCategory = getActivationCategory(item);
-  if (!activationCategory) {
-    module.logger.debug('getAction() - no activation category');
-    return null;
-  }
+  // 2. Determine base Item Type Categories
   const typeCategoryData = getTypeCategory(item);
   if (!typeCategoryData) {
-    module.logger.debug('getAction() - no type category');
-    return null;
+      module.logger.debug('getActionsForItem() - no item type category');
+      return [];
   }
 
   // 3. Determine Name and Filter by Uses
@@ -244,27 +240,59 @@ const getAction = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e)
   const finalName = getActionNameWithUses(item, baseName);
   
   if (!finalName) {
-      module.logger.debug('getAction() - filtered by zero uses');
-      return null;
+      module.logger.debug('getActionsForItem() - filtered by zero uses');
+      return [];
   }
   
-  // 4. Construct the Action
+  // 4. Find the highest priority viable activity
+  let bestActivationCategory: ActivationCategory | null = null;
+  let bestActivityId: string | null = null;
+  
+  const activities = item.system.activities instanceof foundry.utils.Collection 
+        ? item.system.activities.entries()
+        : [];
+        
+  for (const [activityId, activity] of activities) {
+      const activationType = activity.activation?.type;
+      const currentCategory = getActivationCategoryFromType(activationType);
+
+      if (!currentCategory) {
+          continue; // Skip non-action activities
+      }
+
+      // Prioritize the category with the lower sort number
+      if (!bestActivationCategory || currentCategory.sort < bestActivationCategory.sort) {
+          bestActivationCategory = currentCategory;
+          bestActivityId = activityId;
+      }
+  }
+
+  // 5. If no viable activity was found, return nothing
+  if (!bestActivityId || !bestActivationCategory) {
+      console.error('getActionsForItem() - item had no viable activities after filtering.');
+      return [];
+  }
+  
+  // 6. Construct the single Action
   const roll = () => {
-    void item.use();
+      // Roll using the highest priority activity found
+      void item.use(bestActivityId!); 
   };
-  
+
   const action: Action = {
-    roll,
-    actor,
-    item,
-    name: finalName,
-    activationCategory,
-    ...typeCategoryData,
-    newTurnReset: null,
+      roll,
+      actor,
+      item,
+      activityId: bestActivityId, // Store the chosen activity ID
+      name: finalName,
+      activationCategory: bestActivationCategory, // Store the chosen category
+      ...typeCategoryData,
+      newTurnReset: null,
   };
-  
-  module.logger.debug('getAction() return', action);
-  return action;
+
+  module.logger.debug('getActionsForItem() added SINGLE action for item, using activity:', bestActivityId, action);
+
+  return [action]; // Return an array with only one action
 };
 
 // --- Main Exported Function ---
@@ -274,12 +302,12 @@ export const getTokenActions = (actor: dnd5e.documents.Actor5e) => {
     return null;
   }
   const actions: Action[] = [];
+  
   for (const item of actor.items) {
-    const action = getAction(actor, item);
-    if (action) {
-      actions.push(action);
-    }
+    const itemActions = getActionsForItem(actor, item);
+    actions.push(...itemActions);
   }
+  
   actions.sort((a, b) => {
     const activationCategorySort = a.activationCategory.sort - b.activationCategory.sort;
     if (activationCategorySort !== 0) {
