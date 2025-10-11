@@ -172,9 +172,7 @@ const getDefaultTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subc
 
     // Apply filtering for unequipped items (only for non-NPCs)
     if (item.actor?.type !== 'npc' && !foundry.utils.getProperty(item.system, 'equipped')) {
-        if (!showUnequippedItems(item.actor)) {
-            return null;
-        }
+        if (!showUnequippedItems(item.actor)) { return null; }
     }
     
     return { typeCategory, subcategory };
@@ -229,15 +227,16 @@ const hasNoFavoritesOrIsInFavorites = (actor: dnd5e.documents.Actor5e, item: dnd
 const getActionNameWithUses = (item: dnd5e.documents.Item5e, baseName: string): string | null => {
     const uses = ItemSystem.calculateUsesForItem(item);
 
-    if (!uses) {
+    if (!uses) { 
+        module.logger.debug('getActionNameWithUses() - no uses');
         return baseName;
     }
-
     module.logger.debug('getActionNameWithUses() - uses', uses);
 
     // Filter out zero-use items if the setting is disabled
     if (uses.available === 0) {
-        if (!ShowZeroUsesRemainActions.get()) {
+        if (!ShowZeroUsesRemainActions.get()) { 
+            module.logger.debug('getActionNameWithUses() - filtered by zero uses');
             return null;
         }
     }
@@ -254,8 +253,7 @@ const getActionNameWithUses = (item: dnd5e.documents.Item5e, baseName: string): 
 
 
 /**
- * Creates a single Action object for an item, prioritizing the viable activity with the lowest
- * activation cost (e.g., 'action' over 'bonus').
+ * Creates a single Action object for an item with multiple Activities
  * @param actor The parent actor document.
  * @param item The Item5e document.
  * @returns An array containing a single Action object, or an empty array if the item/activity is filtered.
@@ -263,6 +261,7 @@ const getActionNameWithUses = (item: dnd5e.documents.Item5e, baseName: string): 
 const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e): Action[] => {
   // 1. Filter by Favorites Setting
   if (ShowOnlyFavorites.get() && !hasNoFavoritesOrIsInFavorites(actor, item)) {
+    module.logger.debug(`getActionsForItem(actor, ${item.name}) - filtered by favorites when setting is enabled`);
     return [];
   }
   module.logger.debug('getActionsForItem()', actor, item);
@@ -284,7 +283,7 @@ const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents
       return [];
   }
   
-  // 4. Find the highest priority viable activity
+  // 4. Find any viable activity (prioritizing the first valid one)
   let itemActivationCategory: ActivationCategory | null = null;
   let itemActivityId: string | null = null;
   
@@ -296,9 +295,7 @@ const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents
       const activationType = activity.activation?.type;
       const currentCategory = getActivationCategoryFromType(activationType);
 
-      if (!currentCategory) {
-          continue; // Skip non-action activities
-      }
+      if (!currentCategory) continue; // Skip non-action activities
 
       itemActivationCategory = currentCategory;
       itemActivityId = activityId;
@@ -323,9 +320,8 @@ const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents
       ...typeCategoryData,
       newTurnReset: null,
   };
-  
+
   module.logger.debug('getActionsForItem() added SINGLE action for item, using activity:', itemActivityId, action);
-  
   return [action]; // Return an array with only one action
 };
 
@@ -335,8 +331,7 @@ const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents
  * Generates a sorted list of executable actions for a given actor's token quick-action menu.
  * * This function iterates through all of the actor's items, applies various module-specific
  * filtering logic (e.g., favorites, unequipped, zero uses), and attempts to convert each 
- * item into a single executable Action object, prioritizing the activity with the lowest
- * activation cost (e.g., "action" over "bonus action").
+ * item into a single executable Action object based on its activities.
  *
  * @param {dnd5e.documents.Actor5e} actor The actor document for which to generate actions.
  * @returns {Action[] | null} A sorted array of Action objects, or null if no actor is provided.
@@ -349,9 +344,7 @@ const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents
  * 4.  **Item Name:** Final sort alphabetically (case-insensitive) by the calculated action name.
  */
 export const getTokenActions = (actor: dnd5e.documents.Actor5e) => {
-  if (!actor) {
-    return null;
-  }
+  if (!actor) { return null;}
   const actions: Action[] = [];
   
   for (const item of actor.items) {
@@ -360,18 +353,12 @@ export const getTokenActions = (actor: dnd5e.documents.Actor5e) => {
   }
   
   actions.sort((a, b) => {
-    const activationCategorySort = a.activationCategory.sort - b.activationCategory.sort;
-    if (activationCategorySort !== 0) {
-      return activationCategorySort;
-    }
-    const typeCategorySort = a.typeCategory.sort - b.typeCategory.sort;
-    if (typeCategorySort !== 0) {
-      return typeCategorySort;
-    }
-    const subcategorySort = a.subcategory - b.subcategory;
-    if (subcategorySort !== 0) {
-      return subcategorySort;
-    }
+    const activationCategoryDelta = a.activationCategory.sort - b.activationCategory.sort;
+    if (activationCategoryDelta !== 0) { return activationCategoryDelta; }
+    const typeCategoryDelta = a.typeCategory.sort - b.typeCategory.sort;
+    if (typeCategoryDelta !== 0) { return typeCategoryDelta; }
+    const subcategoryDelta = a.subcategory - b.subcategory;
+    if (subcategoryDelta !== 0) { return subcategoryDelta; }
     return caseInsensitiveCompare(a.name, b.name);
   });
 
