@@ -2,9 +2,13 @@ import * as ItemSystem from './item-system';
 import module from './module';
 import { ShowOnlyFavorites, ShowZeroUsesRemainActions, showUnequippedItems, showUnpreparedSpells } from './settings';
 
+// --- Utility Functions ---
+
 function caseInsensitiveCompare(a: string, b: string) {
   return a.localeCompare(b, undefined, { sensitivity: 'base' });
 }
+
+// --- Action and Category Types & Constants ---
 
 export type Action = {
   roll: () => void;
@@ -14,46 +18,7 @@ export type Action = {
   activationCategory: ActivationCategory;
   typeCategory: TypeCategory;
   subcategory: number;
-  newTurnReset?: (() => Promise<void>) | null;
-};
-
-// NOTE: The getAction function must be defined for getTokenActions to work, 
-// but based on your request, I will only include the structure for now
-// and ensure the dependencies are clear.
-
-export const getTokenActions = (actor: dnd5e.documents.Actor5e) => {
-  if (!actor) {
-    return null;
-  }
-  // Removed newTurnResets variable
-  const actions: Action[] = [];
-  for (const item of actor.items) {
-    const action = getAction(actor, item);
-    if (action) {
-      actions.push(action);
-      // Removed newTurnReset pushing logic
-    }
-  }
-  actions.sort((a, b) => {
-    const activationCategorySort = a.activationCategory.sort - b.activationCategory.sort;
-    if (activationCategorySort !== 0) {
-      return activationCategorySort;
-    }
-    const typeCategorySort = a.typeCategory.sort - b.typeCategory.sort;
-    if (typeCategorySort !== 0) {
-      return typeCategorySort;
-    }
-    const subcategorySort = a.subcategory - b.subcategory;
-    if (subcategorySort !== 0) {
-      return subcategorySort;
-    }
-    return caseInsensitiveCompare(a.name, b.name);
-  });
-
-  // Removed Legendary Actions logic
-  // Removed "Reset for New Turn" Action logic
-
-  return actions;
+  newTurnReset?: (() => Promise<void>) | null; // Kept for compatibility, though always null now
 };
 
 export type ActivationCategory = {
@@ -70,6 +35,21 @@ const ACTIVATION_CATEGORY = {
   crew: { sort: 7, name: 'illandril-npc-quick-actions.activation_crew' },
   newTurn: { sort: 99, name: 'illandril-npc-quick-actions.activation_new-turn' },
 };
+
+type TypeCategory = {
+  sort: number;
+  prefix?: string;
+};
+const TYPE_CATEGORY = {
+  weapon: { sort: 1 },
+  equipment: { sort: 2 },
+  consumable: { sort: 3 },
+  other: { sort: 4 },
+  feature: { sort: 5 },
+  spell: { sort: 6 },
+};
+
+// --- Category Logic Helpers (Unchanged, as they are already logical helpers) ---
 
 const getActivationCategory = (item: Item) => {
   let activationCategory: ActivationCategory | null;
@@ -101,19 +81,6 @@ const getActivationCategory = (item: Item) => {
       activationCategory = null;
   }
   return activationCategory;
-};
-
-type TypeCategory = {
-  sort: number;
-  prefix?: string;
-};
-const TYPE_CATEGORY = {
-  weapon: { sort: 1 },
-  equipment: { sort: 2 },
-  consumable: { sort: 3 },
-  other: { sort: 4 },
-  feature: { sort: 5 },
-  spell: { sort: 6 },
 };
 
 const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
@@ -193,7 +160,7 @@ const getTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory
   return { typeCategory, subcategory };
 };
 
-// Removed getNewTurnReset function entirely
+// --- Filtering Helpers ---
 
 const hasNoFavoritesOrIsInFavorites = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e): boolean => {
   if (!('favorites' in actor.system)) {
@@ -213,54 +180,119 @@ const hasNoFavoritesOrIsInFavorites = (actor: dnd5e.documents.Actor5e, item: dnd
   return false;
 };
 
+// --- Action Construction Helpers ---
+
+/**
+ * Calculates item uses and applies the use count/max to the action name.
+ * Also applies filtering for zero-use items.
+ * @returns The formatted name string, or null if the item should be filtered out.
+ */
+const getActionNameWithUses = (item: dnd5e.documents.Item5e, baseName: string): string | null => {
+    const uses = ItemSystem.calculateUsesForItem(item);
+
+    if (!uses) {
+        return baseName;
+    }
+
+    module.logger.debug('getActionNameWithUses() - uses', uses);
+
+    // Filter out zero-use items if the setting is disabled
+    if (uses.available === 0) {
+        if (!ShowZeroUsesRemainActions.get()) {
+            return null;
+        }
+        // Retain the item if ShowZeroUsesRemainActions is true
+    }
+
+    let name = baseName;
+    if (uses.maximum) {
+        name = `${name} (${uses.available} / ${uses.maximum})`;
+    } else {
+        name = `${name} (${uses.available})`;
+    }
+    module.logger.debug('getActionNameWithUses() - name', name);
+    return name;
+};
+
+
+/**
+ * Core function to attempt to build an Action object for a given Item.
+ */
 const getAction = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e): Action | null => {
+  // 1. Filter by Favorites Setting
   if (ShowOnlyFavorites.get() && !hasNoFavoritesOrIsInFavorites(actor, item)) {
     return null;
   }
   module.logger.debug('getAction()', actor, item);
-  const roll = () => {
-    void item.use();
-  };
+  
+  // 2. Determine Categories
   const activationCategory = getActivationCategory(item);
   if (!activationCategory) {
     module.logger.debug('getAction() - no activation category');
     return null;
   }
-  const typeCategory = getTypeCategory(item);
-  if (!typeCategory) {
+  const typeCategoryData = getTypeCategory(item);
+  if (!typeCategoryData) {
     module.logger.debug('getAction() - no type category');
     return null;
   }
-  let name = `${typeCategory.typeCategory?.prefix ?? ''}${item.name}`;
-  module.logger.debug('getAction() - name', name);
 
-  let newTurnReset: (() => Promise<void>) | null = null;
-  const uses = ItemSystem.calculateUsesForItem(item);
-  if (uses) {
-    module.logger.debug('getAction() - uses', uses);
-    if (uses.maximum) {
-      name = `${name} (${uses.available} / ${uses.maximum})`;
-    } else {
-      name = `${name} (${uses.available})`;
-    }
-    module.logger.debug('getAction() - name', name);
-
-    const recharge = item.type === 'feat' ? (item.system as dnd5e.documents.ItemSystemData.Feat).recharge : null;
-    // RECHARGE LOGIC REMOVED: Since getNewTurnReset is removed, we just check for zero uses
-    if (uses.available === 0 && !ShowZeroUsesRemainActions.get()) {
+  // 3. Determine Name and Filter by Uses
+  const baseName = `${typeCategoryData.typeCategory?.prefix ?? ''}${item.name}`;
+  const finalName = getActionNameWithUses(item, baseName);
+  
+  if (!finalName) {
+      module.logger.debug('getAction() - filtered by zero uses');
       return null;
-    }
   }
-  const action = {
+  
+  // 4. Construct the Action
+  const roll = () => {
+    void item.use();
+  };
+  
+  const action: Action = {
     roll,
     actor,
     item,
-    name,
+    name: finalName,
     activationCategory,
-    ...typeCategory,
-    // newTurnReset is always null or undefined now, but kept for type compatibility
-    newTurnReset, 
+    ...typeCategoryData,
+    newTurnReset: null, // Always null after refactoring
   };
+  
   module.logger.debug('getAction() return', action);
   return action;
+};
+
+// --- Main Exported Function ---
+
+export const getTokenActions = (actor: dnd5e.documents.Actor5e) => {
+  if (!actor) {
+    return null;
+  }
+  const actions: Action[] = [];
+  for (const item of actor.items) {
+    const action = getAction(actor, item);
+    if (action) {
+      actions.push(action);
+    }
+  }
+  actions.sort((a, b) => {
+    const activationCategorySort = a.activationCategory.sort - b.activationCategory.sort;
+    if (activationCategorySort !== 0) {
+      return activationCategorySort;
+    }
+    const typeCategorySort = a.typeCategory.sort - b.typeCategory.sort;
+    if (typeCategorySort !== 0) {
+      return typeCategorySort;
+    }
+    const subcategorySort = a.subcategory - b.subcategory;
+    if (subcategorySort !== 0) {
+      return subcategorySort;
+    }
+    return caseInsensitiveCompare(a.name, b.name);
+  });
+
+  return actions;
 };
