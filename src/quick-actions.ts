@@ -18,7 +18,7 @@ export type Action = {
   activationCategory: ActivationCategory;
   typeCategory: TypeCategory;
   subcategory: number;
-  newTurnReset?: (() => Promise<void>) | null; // Kept for compatibility, though always null now
+  newTurnReset?: (() => Promise<void>) | null;
 };
 
 export type ActivationCategory = {
@@ -49,38 +49,28 @@ const TYPE_CATEGORY = {
   spell: { sort: 6 },
 };
 
-// --- Category Logic Helpers (Unchanged, as they are already logical helpers) ---
+// --- Category Logic Helpers ---
 
-const getActivationCategory = (item: Item) => {
-  let activationCategory: ActivationCategory | null;
+/**
+ * Uses a map lookup to convert the item's activation type string to an ActivationCategory object.
+ * This replaces the verbose switch statement with a single lookup and null check.
+ */
+const getActivationCategory = (item: Item): ActivationCategory | null => {
   const activationType = foundry.utils.getProperty(item.system, 'activation.type');
-  switch (activationType) {
-    case 'action':
-      activationCategory = ACTIVATION_CATEGORY.action;
-      break;
-    case 'bonus':
-      activationCategory = ACTIVATION_CATEGORY.bonus;
-      break;
-    case 'reaction':
-      activationCategory = ACTIVATION_CATEGORY.reaction;
-      break;
-    case 'legendary':
-      activationCategory = ACTIVATION_CATEGORY.legendary;
-      break;
-    case 'lair':
-      activationCategory = ACTIVATION_CATEGORY.lair;
-      break;
-    case 'crew':
-      activationCategory = ACTIVATION_CATEGORY.crew;
-      break;
-    case 'special':
-      activationCategory = ACTIVATION_CATEGORY.special;
-      break;
-    // minute, hour, and day intentionally included in default
-    default:
-      activationCategory = null;
+  if (activationType) {
+    const activationMap: Record<string, ActivationCategory> = {
+        action: ACTIVATION_CATEGORY.action,
+        bonus: ACTIVATION_CATEGORY.bonus,
+        reaction: ACTIVATION_CATEGORY.reaction,
+        legendary: ACTIVATION_CATEGORY.legendary,
+        lair: ACTIVATION_CATEGORY.lair,
+        crew: ACTIVATION_CATEGORY.crew,
+        special: ACTIVATION_CATEGORY.special,
+    };
+    // The keys 'minute', 'hour', and 'day' will correctly fall to 'null'
+    return activationMap[activationType] ?? null;
   }
-  return activationCategory;
+  return null;
 };
 
 const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
@@ -130,34 +120,46 @@ const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcat
   };
 };
 
+/**
+ * Handles non-feat and non-spell item types (weapon, equipment, consumable, other).
+ * Contains the logic for filtering unequipped items.
+ */
+const getDefaultTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
+    const itemType = item.type;
+    const subcategory = 0;
+
+    // Use a map for the item type lookup
+    const typeMap: Record<string, TypeCategory> = {
+        weapon: TYPE_CATEGORY.weapon,
+        equipment: TYPE_CATEGORY.equipment,
+        consumable: TYPE_CATEGORY.consumable,
+    };
+    
+    // Get category from map, or fall back to 'other'
+    const typeCategory = typeMap[itemType] ?? TYPE_CATEGORY.other;
+
+    // Apply filtering for unequipped items (only for non-NPCs)
+    if (item.actor?.type !== 'npc' && !foundry.utils.getProperty(item.system, 'equipped')) {
+        if (!showUnequippedItems(item.actor)) {
+            return null;
+        }
+    }
+    
+    return { typeCategory, subcategory };
+};
+
+/**
+ * Simplifies the main type switch by calling helper functions for complex paths.
+ */
 const getTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
-  const subcategory = 0;
-  let typeCategory: TypeCategory;
-  const itemType = item.type;
-  switch (itemType) {
+  switch (item.type) {
     case 'feat':
-      typeCategory = TYPE_CATEGORY.feature;
-      break;
+      return { typeCategory: TYPE_CATEGORY.feature, subcategory: 0 };
     case 'spell':
       return getSpellTypeCategory(item);
     default:
-      if (itemType === 'weapon') {
-        typeCategory = TYPE_CATEGORY.weapon;
-      } else if (itemType === 'equipment') {
-        typeCategory = TYPE_CATEGORY.equipment;
-      } else if (itemType === 'consumable') {
-        typeCategory = TYPE_CATEGORY.consumable;
-      } else {
-        typeCategory = TYPE_CATEGORY.other;
-      }
-      if (item.actor?.type !== 'npc' && !foundry.utils.getProperty(item.system, 'equipped')) {
-        if (!showUnequippedItems(item.actor)) {
-          return null;
-        }
-      }
-      break;
+      return getDefaultTypeCategory(item);
   }
-  return { typeCategory, subcategory };
 };
 
 // --- Filtering Helpers ---
@@ -258,7 +260,7 @@ const getAction = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e)
     name: finalName,
     activationCategory,
     ...typeCategoryData,
-    newTurnReset: null, // Always null after refactoring
+    newTurnReset: null,
   };
   
   module.logger.debug('getAction() return', action);
