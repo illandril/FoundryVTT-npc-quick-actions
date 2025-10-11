@@ -151,9 +151,6 @@ const getSpellMethodCategory = (method: string): Pick<Action, 'subcategory' | 't
     };
 };
 
-// Define which spell methods should use the Level/Cantrip logic
-const LEVEL_BASED_METHODS = new Set(['spell', '']);
-
 /**
  * Determines the specific TypeCategory and subcategory for spell items.
  * @param item The Item5e document (assumed to be a spell).
@@ -164,8 +161,7 @@ const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcat
     const method = spellData.method ?? '';
 
     // --- Phase 1: Determine if this is a LEVEL-BASED spell ---
-    const isLevelBased = LEVEL_BASED_METHODS.has(method);
-    if (isLevelBased) {
+    if (method === 'spell') {
         if (shouldFilterUnpreparedSpell(item, spellData)) { return null; }
         return getSpellLevelCategory(spellData);
     }
