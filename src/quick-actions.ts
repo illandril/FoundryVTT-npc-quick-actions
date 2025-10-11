@@ -37,9 +37,10 @@ const ACTIVATION_CATEGORY = {
   bonus: { sort: 2, name: 'illandril-npc-quick-actions.activation_bonus' },
   reaction: { sort: 3, name: 'illandril-npc-quick-actions.activation_reaction' },
   legendary: { sort: 4, name: 'illandril-npc-quick-actions.activation_legendary' },
-  lair: { sort: 5, name: 'illandril-npc-quick-actions.activation_lair' },
-  special: { sort: 6, name: 'illandril-npc-quick-actions.activation_special' },
-  crew: { sort: 7, name: 'illandril-npc-quick-actions.activation_crew' },
+  legendaryResistance: { sort: 5, name: 'illandril-npc-quick-actions.activation_legendaryResistance' },
+  lair: { sort: 6, name: 'illandril-npc-quick-actions.activation_lair' },
+  special: { sort: 7, name: 'illandril-npc-quick-actions.activation_special' },
+  crew: { sort: 8, name: 'illandril-npc-quick-actions.activation_crew' },
   newTurn: { sort: 99, name: 'illandril-npc-quick-actions.activation_new-turn' },
 };
 
@@ -79,6 +80,13 @@ const getActivationCategoryFromType = (activationType: string | undefined): Acti
     // This is safer than an explicit map that duplicates the object's contents
     const key = activationType.toLowerCase(); 
     return ACTIVATION_CATEGORY[key as keyof typeof ACTIVATION_CATEGORY] ?? null;
+};
+
+const getActivationCategoryFromActivity = (activity: any): ActivationCategory | null => {
+  if (activity?.consumption?.targets?.some((target: any) => target?.target === 'resources.legres.value')) {
+    return ACTIVATION_CATEGORY.legendaryResistance;
+  }
+  return getActivationCategoryFromType(activity?.activation?.type);
 };
 
 // --- Spell Type Helpers (Retained from previous cleanup) ---
@@ -283,29 +291,34 @@ const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents
       return [];
   }
   
-  // 4. Find any viable activity (prioritizing the first valid one)
+  // 4. Find any viable activity (prioritizing the one with the highest sort order)
   let itemActivationCategory: ActivationCategory | null = null;
   let itemActivityId: string | null = null;
-  
-  const activities = item.system.activities instanceof foundry.utils.Collection 
-        ? item.system.activities.entries()
-        : [];
-        
+
+  const activities =
+    item.system.activities instanceof foundry.utils.Collection ? item.system.activities.entries() : [];
+
+  let highestPrioActivity: { category: ActivationCategory; id: string } | null = null;
+
   for (const [activityId, activity] of activities) {
-      const activationType = activity?.activation?.type;
-      const currentCategory = getActivationCategoryFromType(activationType);
+    const currentCategory = getActivationCategoryFromActivity(activity);
 
-      if (!currentCategory) continue; // Skip non-action activities
+    if (currentCategory) {
+      if (!highestPrioActivity || currentCategory.sort > highestPrioActivity.category.sort) {
+        highestPrioActivity = { category: currentCategory, id: activityId };
+      }
+    }
+  }
 
-      itemActivationCategory = currentCategory;
-      itemActivityId = activityId;
-      break;
+  if (highestPrioActivity) {
+    itemActivationCategory = highestPrioActivity.category;
+    itemActivityId = highestPrioActivity.id;
   }
 
   // 5. If no viable activity was found, return nothing
   if (!itemActivityId || !itemActivationCategory) {
-      module.logger.debug('getActionsForItem() - item had no viable activities after filtering.');
-      return [];
+    module.logger.debug('getActionsForItem() - item had no viable activities after filtering.');
+    return [];
   }
   
   // 6. Construct the single Action
