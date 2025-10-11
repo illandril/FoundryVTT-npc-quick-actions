@@ -79,14 +79,6 @@ const getActivationCategoryFromType = (activationType: string | undefined): Acti
     return activationMap[activationType] ?? null;
 };
 
-/**
- * Kept for potential compatibility, but largely replaced by getActivationCategoryFromType.
- */
-const getActivationCategory = (item: Item): ActivationCategory | null => {
-  const activationType = foundry.utils.getProperty(item.system, 'activation.type');
-  return getActivationCategoryFromType(activationType);
-};
-
 
 /**
  * Determines the specific TypeCategory and subcategory for spell items.
@@ -95,42 +87,54 @@ const getActivationCategory = (item: Item): ActivationCategory | null => {
  * @returns Category and subcategory data, or null if the spell is filtered out.
  */
 const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
-  let subcategory = 0;
   const spellData = item.system as dnd5e.documents.ItemSystemData.Spell;
+  const method = spellData.method ?? 'prepared';
+  let subcategory: number;
   let prefix: string;
-  switch (spellData.method ?? 'prepared') {
-    case 'pact':
-      prefix = module.localize('spell-abbr.pact');
-      subcategory = 0.5;
-      break;
-    // biome-ignore lint/suspicious/noFallthroughSwitchClause: 'prepared' intentionally falls through
-    case 'prepared':
-      if (item.actor?.type !== 'npc' && !spellData.prepared) {
-        if (!showUnpreparedSpells(item.actor)) {
-          return null;
-        }
+
+  // --- Phase 1: Handle Special Methods and Filtering ---
+  
+  // Use a map for special, non-level-based methods
+  const methodMap: Record<string, { subcategory: number, prefixKey: string }> = {
+    'pact': { subcategory: 0.5, prefixKey: 'spell-abbr.pact' },
+    'innate': { subcategory: -10, prefixKey: 'spell-abbr.innate' },
+    'atwill': { subcategory: -20, prefixKey: 'spell-abbr.atwill' },
+  };
+
+  if (method === 'prepared') {
+    // Handle the specific filtering logic for prepared spells
+    if (item.actor?.type !== 'npc' && !spellData.prepared) {
+      if (!showUnpreparedSpells(item.actor)) {
+        return null; // Filtered out
       }
-    case 'always':
-      subcategory = spellData.level ?? 0;
-      if (subcategory === 0) {
-        prefix = module.localize('spell-abbr.cantrip');
-      } else {
-        prefix = `${spellData.level}`;
-      }
-      break;
-    case 'innate':
-      subcategory = -10;
-      prefix = module.localize('spell-abbr.innate');
-      break;
-    case 'atwill':
-      subcategory = -20;
-      prefix = module.localize('spell-abbr.atwill');
-      break;
-    default:
-      subcategory = -30;
-      prefix = module.localize('spell-abbr.unknown');
-      break;
+    }
+    // FALLTHROUGH to Phase 2: Calculate level/cantrip (handled by default/level logic below)
+  } else if (methodMap[method]) {
+    // Handle specific methods found in the map
+    const data = methodMap[method];
+    subcategory = data.subcategory;
+    prefix = module.localize(data.prefixKey);
+  } else if (method === 'always') {
+    // FALLTHROUGH to Phase 2: Calculate level/cantrip (handled by default/level logic below)
+  } else {
+    // Handle true unknown/default cases
+    subcategory = -30;
+    prefix = module.localize('spell-abbr.unknown');
   }
+
+  // --- Phase 2: Calculate Level-Based Subcategory (Applies to prepared and always) ---
+  
+  if (method === 'prepared' || method === 'always') {
+    subcategory = spellData.level ?? 0;
+    if (subcategory === 0) {
+      prefix = module.localize('spell-abbr.cantrip');
+    } else {
+      prefix = `${spellData.level}`;
+    }
+  }
+
+  // If subcategory/prefix were not set (i.e., by Phase 1 for unknown methods), 
+  // they would have been set in the final else block above.
 
   return {
     subcategory,
@@ -195,21 +199,15 @@ const getTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory
  * @returns True if the item is a favorite or if the actor has no favorites, false otherwise.
  */
 const hasNoFavoritesOrIsInFavorites = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e): boolean => {
-  if (!('favorites' in actor.system)) {
-    return true;
-  }
-  if (!actor.system.favorites?.length) {
-    return true;
-  }
+  // Check 1: If the actor system doesn't support favorites, always include.
+  if (!('favorites' in actor.system)) return true;  
 
-  for (const favorite of actor.system.favorites) {
-    if (favorite.type === 'item') {
-      if (favorite.id.endsWith(`.${item.id}`)) {
-        return true;
-      }
-    }
-  }
-  return false;
+  // Check 2: If there are no favorites defined, always include.
+  const favorites = actor.system.favorites;
+  if (!favorites?.length) return true;
+
+  // Check 3: Does ANY favorite entry match this item ID?
+  return favorites.some(favorite => favorite.type === 'item' && favorite.id.endsWith(`.${item.id}`));
 };
 
 // --- Action Construction Helpers ---
@@ -270,7 +268,8 @@ const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents
   }
 
   // 3. Determine Name and Filter by Uses
-  const baseName = `${typeCategoryData.typeCategory?.prefix ?? ''}${item.name}`;
+  const prefix = typeCategoryData.typeCategory.prefix ?? '';
+  const baseName = `${prefix}${item.name}`;
   const finalName = getActionNameWithUses(item, baseName);
   
   if (!finalName) {
