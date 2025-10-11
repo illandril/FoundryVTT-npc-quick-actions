@@ -86,7 +86,7 @@ const getActivationCategoryFromType = (activationType: string | undefined): Acti
 /**
  * Checks if a prepared spell should be filtered out based on actor type and settings.
  */
-const shouldFilterUnpreparedSpell = (item: Item, spellData: dnd5e.documents.ItemSystemData.Spell): boolean => {
+const shouldFilterUnpreparedSpell = (item: dnd5e.documents.Item5e, spellData: dnd5e.documents.ItemSystemData.Spell): boolean => {
     return (
         item.actor?.type !== 'npc' && 
         !spellData.prepared && 
@@ -140,7 +140,7 @@ const getSpellMethodCategory = (method: string): Pick<Action, 'subcategory' | 't
  * @param item The Item5e document (assumed to be a spell).
  * @returns Category and subcategory data, or null if the spell is filtered out.
  */
-const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
+const getSpellTypeCategory = (item: dnd5e.documents.Item5e): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
     const spellData = item.system as dnd5e.documents.ItemSystemData.Spell;
     const method = spellData.method ?? '';
 
@@ -163,7 +163,7 @@ const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcat
  * * @param item The Item5e document.
  * @returns Category and subcategory data, or null if the item is filtered out.
  */
-const getDefaultTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
+const getDefaultTypeCategory = (item: dnd5e.documents.Item5e): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
     const itemType = item.type;
     const subcategory = 0;
     
@@ -184,7 +184,7 @@ const getDefaultTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subc
  * @param item The Item5e document.
  * @returns Category and subcategory data, or null if the item is filtered out.
  */
-const getTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
+const getTypeCategory = (item: dnd5e.documents.Item5e): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
   switch (item.type) {
     case 'feat':
       return { typeCategory: TYPE_CATEGORY.feature, subcategory: 0 };
