@@ -4,6 +4,12 @@ import { ShowOnlyFavorites, ShowZeroUsesRemainActions, showUnequippedItems, show
 
 // --- Utility Functions ---
 
+/**
+ * Compares two strings case-insensitively for sorting.
+ * @param a The first string.
+ * @param b The second string.
+ * @returns A number indicating sort order.
+ */
 function caseInsensitiveCompare(a: string, b: string) {
   return a.localeCompare(b, undefined, { sensitivity: 'base' });
 }
@@ -53,7 +59,9 @@ const TYPE_CATEGORY = {
 // --- Category Logic Helpers ---
 
 /**
- * Uses a map lookup to convert the activation type string (from an activity) to an ActivationCategory object.
+ * Maps a Foundry D&D 5e activation type string (e.g., 'action', 'bonus') to a categorized object.
+ * @param activationType The string type from an Item's activity activation.
+ * @returns The matching ActivationCategory object, or null if the type is not a quick action.
  */
 const getActivationCategoryFromType = (activationType: string | undefined): ActivationCategory | null => {
     if (!activationType) {
@@ -71,13 +79,21 @@ const getActivationCategoryFromType = (activationType: string | undefined): Acti
     return activationMap[activationType] ?? null;
 };
 
-// Kept for consistency, though not strictly used in the new item-to-action logic
+/**
+ * Kept for potential compatibility, but largely replaced by getActivationCategoryFromType.
+ */
 const getActivationCategory = (item: Item): ActivationCategory | null => {
   const activationType = foundry.utils.getProperty(item.system, 'activation.type');
   return getActivationCategoryFromType(activationType);
 };
 
 
+/**
+ * Determines the specific TypeCategory and subcategory for spell items.
+ * Applies filtering for unprepared spells based on settings.
+ * @param item The Item5e document (assumed to be a spell).
+ * @returns Category and subcategory data, or null if the spell is filtered out.
+ */
 const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
   let subcategory = 0;
   const spellData = item.system as dnd5e.documents.ItemSystemData.Spell;
@@ -126,7 +142,10 @@ const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcat
 };
 
 /**
- * Handles non-feat and non-spell item types (weapon, equipment, consumable, other).
+ * Determines the TypeCategory and subcategory for non-feat, non-spell items.
+ * Applies filtering for unequipped items based on settings.
+ * @param item The Item5e document.
+ * @returns Category and subcategory data, or null if the item is filtered out.
  */
 const getDefaultTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
     const itemType = item.type;
@@ -151,7 +170,10 @@ const getDefaultTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subc
 };
 
 /**
- * Simplifies the main type switch by calling helper functions for complex paths.
+ * Determines the TypeCategory and subcategory for any given Item.
+ * Acts as a router to specific type category helpers.
+ * @param item The Item5e document.
+ * @returns Category and subcategory data, or null if the item is filtered out.
  */
 const getTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
   switch (item.type) {
@@ -166,6 +188,12 @@ const getTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory
 
 // --- Filtering Helpers ---
 
+/**
+ * Checks if the item should be displayed based on the actor's favorites and the module's settings.
+ * @param actor The parent actor.
+ * @param item The item to check.
+ * @returns True if the item is a favorite or if the actor has no favorites, false otherwise.
+ */
 const hasNoFavoritesOrIsInFavorites = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e): boolean => {
   if (!('favorites' in actor.system)) {
     return true;
@@ -187,9 +215,11 @@ const hasNoFavoritesOrIsInFavorites = (actor: dnd5e.documents.Actor5e, item: dnd
 // --- Action Construction Helpers ---
 
 /**
- * Calculates item uses and applies the use count/max to the action name.
- * Also applies filtering for zero-use items.
- * @returns The formatted name string, or null if the item should be filtered out.
+ * Calculates item uses and formats the action name to include available/maximum counts.
+ * Also applies filtering for items with zero uses remaining based on settings.
+ * @param item The item being processed.
+ * @param baseName The base name of the item.
+ * @returns The formatted name string, or null if the item should be filtered out due to zero uses.
  */
 const getActionNameWithUses = (item: dnd5e.documents.Item5e, baseName: string): string | null => {
     const uses = ItemSystem.calculateUsesForItem(item);
@@ -219,7 +249,11 @@ const getActionNameWithUses = (item: dnd5e.documents.Item5e, baseName: string): 
 
 
 /**
- * Creates a single action for the item, choosing the highest priority (lowest sort) viable activity.
+ * Creates a single Action object for an item, prioritizing the viable activity with the lowest
+ * activation cost (e.g., 'action' over 'bonus').
+ * @param actor The parent actor document.
+ * @param item The Item5e document.
+ * @returns An array containing a single Action object, or an empty array if the item/activity is filtered.
  */
 const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents.Item5e): Action[] => {
   // 1. Filter by Favorites Setting
@@ -297,6 +331,23 @@ const getActionsForItem = (actor: dnd5e.documents.Actor5e, item: dnd5e.documents
 
 // --- Main Exported Function ---
 
+/**
+ * Generates a sorted list of executable actions for a given actor's token quick-action menu.
+ * * This function iterates through all of the actor's items, applies various module-specific
+ * filtering logic (e.g., favorites, unequipped, zero uses), and attempts to convert each 
+ * item into a single executable Action object, prioritizing the activity with the lowest
+ * activation cost (e.g., "action" over "bonus action").
+ *
+ * @param {dnd5e.documents.Actor5e} actor The actor document for which to generate actions.
+ * @returns {Action[] | null} A sorted array of Action objects, or null if no actor is provided.
+ * * **Resulting List Structure and Sort Order:**
+ * 1.  **Activation Category:** Primary sort by category priority (lowest 'sort' value first):
+ * Action (1) > Bonus Action (2) > Reaction (3) > Legendary (4) > ...
+ * 2.  **Item Type Category:** Secondary sort by type (lowest 'sort' value first):
+ * Weapon (1) > Equipment (2) > Consumable (3) > Other (4) > Feature (5) > Spell (6)
+ * 3.  **Subcategory:** Tertiary sort, primarily used for sorting Spells (e.g., Cantrip, Level 1, Level 2).
+ * 4.  **Item Name:** Final sort alphabetically (case-insensitive) by the calculated action name.
+ */
 export const getTokenActions = (actor: dnd5e.documents.Actor5e) => {
   if (!actor) {
     return null;
