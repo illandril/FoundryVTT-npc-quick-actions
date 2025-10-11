@@ -107,13 +107,7 @@ const shouldFilterUnpreparedSpell = (item: Item, spellData: dnd5e.documents.Item
  */
 const getSpellLevelCategory = (spellData: dnd5e.documents.ItemSystemData.Spell): Pick<Action, 'subcategory' | 'typeCategory'> => {
     const subcategory = spellData.level ?? 0;
-    let prefix: string;
-
-    if (subcategory === 0) {
-        prefix = module.localize('spell-abbr.cantrip');
-    } else {
-        prefix = `${spellData.level}`;
-    }
+    let prefix = (subcategory === 0) ? module.localize('spell-abbr.cantrip') : `${spellData.level}`;
 
     return {
         subcategory,
@@ -136,10 +130,8 @@ const getSpellMethodCategory = (method: string): Pick<Action, 'subcategory' | 't
     };
 
     const data = methodMap[method];
-
     const subcategory = data?.subcategory ?? -30;
     const prefixKey = data?.prefixKey ?? 'spell-abbr.unknown';
-    
     const prefix = module.localize(prefixKey);
 
     return {
