@@ -44,6 +44,7 @@
       "cantrip": "C",
       "innate": "I",
       "atwill": "W",
+      "ritual": "R",
       "unknown": "?"
     },
     "recharge-roll": "Recharge Roll",

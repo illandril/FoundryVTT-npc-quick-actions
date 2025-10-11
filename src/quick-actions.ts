@@ -130,6 +130,7 @@ const getSpellLevelCategory = (spellData: dnd5e.documents.ItemSystemData.Spell):
 const getSpellMethodCategory = (method: string): Pick<Action, 'subcategory' | 'typeCategory'> => {
     const methodMap: Record<string, { subcategory: number, prefixKey: string }> = {
         'pact': { subcategory: 0.5, prefixKey: 'spell-abbr.pact' },
+        'ritual': { subcategory: 0.6, prefixKey: 'spell-abbr.ritual' },
         'innate': { subcategory: -10, prefixKey: 'spell-abbr.innate' },
         'atwill': { subcategory: -20, prefixKey: 'spell-abbr.atwill' },
     };
@@ -150,6 +151,9 @@ const getSpellMethodCategory = (method: string): Pick<Action, 'subcategory' | 't
     };
 };
 
+// Define which spell methods should use the Level/Cantrip logic
+const LEVEL_BASED_METHODS = new Set(['spell', '']);
+
 /**
  * Determines the specific TypeCategory and subcategory for spell items.
  * @param item The Item5e document (assumed to be a spell).
@@ -157,20 +161,16 @@ const getSpellMethodCategory = (method: string): Pick<Action, 'subcategory' | 't
  */
 const getSpellTypeCategory = (item: Item): Pick<Action, 'typeCategory' | 'subcategory'> | null => {
     const spellData = item.system as dnd5e.documents.ItemSystemData.Spell;
-    const method = spellData.method ?? 'prepared';
+    const method = spellData.method ?? '';
 
-    if (method === 'prepared') {
-        if (shouldFilterUnpreparedSpell(item, spellData)) {
-            return null;
-        }
-        return getSpellLevelCategory(spellData);
-    } 
-    
-    if (method === 'always') {
+    // --- Phase 1: Determine if this is a LEVEL-BASED spell ---
+    const isLevelBased = LEVEL_BASED_METHODS.has(method);
+    if (isLevelBased) {
+        if (shouldFilterUnpreparedSpell(item, spellData)) { return null; }
         return getSpellLevelCategory(spellData);
     }
     
-    // Handles 'pact', 'innate', 'atwill', and unknown fallbacks
+    // --- Phase 2: Handle special METHODS (Pact, Ritual Only, Innate, At Will) ---
     return getSpellMethodCategory(method);
 };
 
