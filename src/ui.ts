@@ -21,7 +21,7 @@ Hooks.once('ready', () => {
   document.body.appendChild(actionsOuterContainer);
 });
 
-export const hide = () => {
+export const hideTokenActions = () => {
   module.logger.debug('hide');
   actionsOuterContainer.classList.remove(CSS_ACTIVE);
   emptyNode(actionsContainer);
@@ -56,9 +56,9 @@ const isShownForActorType = (actor: dnd5e.documents.Actor5e) => {
   return true;
 };
 
-export const show = (token?: Token | null) => {
-  hide();
-  module.logger.debug('show()', token);
+export const showTokenActions = (token?: Token | null) => {
+  hideTokenActions();
+  module.logger.debug('showTokenActions()', token);
   if (!(token?.document?.isOwner && game.user?.hasRole(MinimumRole.get()))) {
     module.logger.debug('show() -> false, not owner or insufficient role');
     return false;

@@ -8,7 +8,7 @@ Hooks.on('init', () => {
   foundry.applications.hud.TokenHUD.prototype.clear = function () {
     originalClear.call(this);
     shownToken = null;
-    ui.hide();
+    ui.hideTokenActions();
   };
 });
 
