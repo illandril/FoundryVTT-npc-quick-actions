@@ -74,19 +74,11 @@ const ITEM_TYPE_MAPPING: Record<string, TypeCategory> = {
  * @returns The matching ActivationCategory object, or null if the type is not a quick action.
  */
 const getActivationCategoryFromType = (activationType: string | undefined): ActivationCategory | null => {
-    if (!activationType) {
-        return null;
-    }
-    const activationMap: Record<string, ActivationCategory> = {
-        action: ACTIVATION_CATEGORY.action,
-        bonus: ACTIVATION_CATEGORY.bonus,
-        reaction: ACTIVATION_CATEGORY.reaction,
-        legendary: ACTIVATION_CATEGORY.legendary,
-        lair: ACTIVATION_CATEGORY.lair,
-        crew: ACTIVATION_CATEGORY.crew,
-        special: ACTIVATION_CATEGORY.special,
-    };
-    return activationMap[activationType] ?? null;
+    if (!activationType) { return null; }
+    // Look up directly, checking if the key exists on the ACTIVATION_CATEGORY object
+    // This is safer than an explicit map that duplicates the object's contents
+    const key = activationType.toLowerCase(); 
+    return ACTIVATION_CATEGORY[key as keyof typeof ACTIVATION_CATEGORY] ?? null;
 };
 
 // --- Spell Type Helpers (Retained from previous cleanup) ---
