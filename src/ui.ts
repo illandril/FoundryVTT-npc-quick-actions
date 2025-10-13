@@ -1,5 +1,5 @@
 import module from './module';
-import { type Action, type ActivationCategory, get } from './quick-actions';
+import { type Action, type ActivationCategory, getTokenActions } from './quick-actions';
 import { MinimumRole, ShowForNPCActors, ShowForPCActors, ShowForVehicleActors } from './settings';
 
 const CSS_ACTIVE = module.cssPrefix.child('active');
@@ -21,7 +21,7 @@ Hooks.once('ready', () => {
   document.body.appendChild(actionsOuterContainer);
 });
 
-export const hide = () => {
+export const hideTokenActions = () => {
   module.logger.debug('hide');
   actionsOuterContainer.classList.remove(CSS_ACTIVE);
   emptyNode(actionsContainer);
@@ -52,33 +52,39 @@ const isShownForActorType = (actor: dnd5e.documents.Actor5e) => {
   if (actor.type === 'vehicle') {
     return ShowForVehicleActors.get();
   }
-  module.logger.debug('isShownForActorType saw a type it does not recognize', actor.type);
+  module.logger.debug('isShownForActorType saw a type it does not recognize:', actor.type);
   return true;
 };
 
-export const show = (token?: Token | null) => {
-  hide();
-  module.logger.debug('show()', token);
+export const showTokenActions = (token?: Token | null) => {
+  hideTokenActions();
+  module.logger.debug('showTokenActions()', token);
+
+  if (!game?.canvas?.hud?.token?.element?.children) {
+    module.logger.debug('showTokenActions() -> false, no token HUD on token:', token);
+    return false;
+  }
+
   if (!(token?.document?.isOwner && game.user?.hasRole(MinimumRole.get()))) {
-    module.logger.debug('show() -> false, not owner or insufficient role');
+    module.logger.debug('showTokenActions() -> false, not owner or insufficient role for token:', token);
     return false;
   }
 
   const actor = token.actor as dnd5e.documents.Actor5e;
   if (!isShownForActorType(actor)) {
-    module.logger.debug('show() -> false, not shown for actor.type', actor.type);
+    module.logger.debug('showTokenActions() -> false, not shown for actor.type:', actor.type);
     return false;
   }
 
-  const actions = get(actor);
+  const actions = getTokenActions(actor);
   if (!actions || actions.length === 0) {
-    module.logger.debug('show() -> true... but no actions');
+    module.logger.debug('showTokenActions() -> true... but no actions:', actions);
     const noActions = document.createElement('div');
     noActions.classList.add(CSS_NO_ACTIONS);
     noActions.appendChild(document.createTextNode(module.localize('no-actions')));
     actionsContainer.appendChild(noActions);
   } else {
-    module.logger.debug('show() -> true', actions);
+    module.logger.debug('showTokenActions() -> true:', actions);
     let lastActivationCategory: ActivationCategory | null = null;
     let activationCategoryContainer: HTMLElement | null = null;
     for (const action of actions) {
@@ -96,53 +102,71 @@ export const show = (token?: Token | null) => {
 };
 
 const repositionActionsOuterContainer = (token: Token) => {
-  const lrOffset = 200;
-  const tokenWidth = token.w * (game.canvas.stage?.scale?.x ?? 1);
-  const leftOffset = Math.floor(token.worldTransform.tx - lrOffset);
-  const rightOffset = Math.ceil(token.worldTransform.tx + tokenWidth + lrOffset);
-  const bottomOffset = getTokenHUDTop() - 6;
-  actionsOuterContainer.style.left = `${leftOffset}px`;
-  actionsOuterContainer.style.right = `calc(100% - ${rightOffset}px)`;
-  actionsOuterContainer.style.top = '';
-  actionsOuterContainer.style.bottom = `calc(100% - ${bottomOffset}px)`;
-  actionsOuterContainer.classList.add(CSS_ACTIVE);
+    // Phase 1: Calculate coordinates that DO NOT depend on the HUD's final position
+    const lrOffset = 200;
 
-  const rect = actionsOuterContainer.getBoundingClientRect();
-  if (rect && rect.top <= 0) {
-    // If the box is going off the top of the screen, move it down relative to the tokenHUD element so that it appears underneath
-    const topOffset = getTokenHUDBottom() + 6;
-    actionsOuterContainer.style.bottom = '';
-    actionsOuterContainer.style.top = `${topOffset}px`;
-  }
+    // Get world coordinates and dimensions of the token
+    const tokenWidth = token.w * (game.canvas.stage?.scale?.x ?? 1);
+    const leftOffset = Math.floor(token.worldTransform.tx - lrOffset);
+    const rightOffset = Math.ceil(token.worldTransform.tx + tokenWidth + lrOffset);
+
+    // Apply the horizontal positioning immediately
+    actionsOuterContainer.style.left = `${leftOffset}px`;
+    actionsOuterContainer.style.right = `calc(100% - ${rightOffset}px)`;
+    actionsOuterContainer.classList.add(CSS_ACTIVE);
+
+    // Phase 2: Defer vertical positioning until the HUD coordinates are stable
+    // Use setTimeout(0) or requestAnimationFrame for stable coordinates
+    setTimeout(() => {
+        // 1. Calculate the desired default position (above the HUD)
+        const hudTop = getTokenHUDTop();
+        let bottomOffset = hudTop - 6;
+
+        // 2. Apply the default positioning (Above Token HUD)
+        actionsOuterContainer.style.top = ''; // Clear 'top' style
+        actionsOuterContainer.style.bottom = `calc(100% - ${bottomOffset}px)`;
+
+        // 3. Check for boundary collision (runs AFTER position is set)
+        const rect = actionsOuterContainer.getBoundingClientRect();
+
+        // If the box is going off the top of the screen (rect.top <= 0), move it underneath
+        if (rect && rect.top <= 0) {
+            const hudBottom = getTokenHUDBottom();
+            const topOffset = hudBottom + 6;
+            actionsOuterContainer.style.bottom = '';
+            actionsOuterContainer.style.top = `${topOffset}px`;
+        }
+    }, 0);
 };
 
 function getTokenHUDTop() {
   // Why not just get the offset().top of the token HUD element, or the columns?
   // Because the columns flow outside the HUD element, and often have lots of empty space in them
-  const tokenHUDColumns = game.canvas.hud?.token?.element?.children();
-  const tokenHUDElements = tokenHUDColumns?.children();
-  let bestTop = 99999;
-  tokenHUDElements?.each((_index, child) => {
-    bestTop = Math.min(bestTop, $(child).offset()?.top ?? bestTop);
-  });
+  let bestTop = Number.POSITIVE_INFINITY;
+  const collection = game?.canvas?.hud?.token?.element?.children;
+  if (collection?.length) {
+    Array.from(collection).forEach(element => {
+        const rect = element.getBoundingClientRect();
+        bestTop = Math.min(bestTop, rect.top ?? bestTop);
+    });
+  }
+
+  module.logger.debug('getTokenHUDTop() ->', bestTop);
   return bestTop;
 }
 
 function getTokenHUDBottom() {
   // Why not just get the offset().top + outerHeight() of the token HUD element, or the columns?
   // Because the columns flow outside the HUD element, and often have lots of empty space in them
-  const tokenHUDColumns = game.canvas.hud?.token?.element?.children();
-  const tokenHUDElements = tokenHUDColumns?.children();
-  let bestBottom = 0;
-  tokenHUDElements?.each((_index, child) => {
-    const jqChild = $(child);
-    const top = jqChild.offset()?.top;
-    const height = jqChild.outerHeight();
-    if (typeof top === 'number' && typeof height === 'number') {
-      const bottom = top + height;
-      bestBottom = Math.max(bestBottom, bottom);
-    }
-  });
+  let bestBottom = Number.NEGATIVE_INFINITY;
+  const collection = game?.canvas?.hud?.token?.element?.children;
+  if (collection?.length) {
+    Array.from(collection).forEach(element => {
+        const rect = element.getBoundingClientRect();
+        bestBottom = Math.max(bestBottom, rect.bottom ?? bestBottom);
+    });
+  }
+  module.logger.debug('getTokenHUDBottom() ->', bestBottom);
   return bestBottom;
 }
 

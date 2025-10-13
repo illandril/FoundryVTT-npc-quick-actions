@@ -1,7 +1,7 @@
 {
   "compatibility": {
-    "minimum": 10,
-    "verified": 12
+    "minimum": "13",
+    "verified": "13.350"
   },
   "esmodules": ["module.js"],
   "styles": ["styles.css"],
@@ -18,7 +18,7 @@
         "id": "dnd5e",
         "type": "system",
         "compatibility": {
-          "verified": "3.2.0"
+          "verified": "5.1.9"
         }
       }
     ]

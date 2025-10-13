@@ -4,18 +4,18 @@ import * as ui from './ui';
 let shownToken: Token | null = null;
 
 Hooks.on('init', () => {
-  const originalClear = TokenHUD.prototype.clear;
-  TokenHUD.prototype.clear = function () {
-    originalClear.call(this);
+    const originalClose = foundry.applications.hud.TokenHUD.prototype.close;
+    foundry.applications.hud.TokenHUD.prototype.close = function () {
+    originalClose.call(this);
     shownToken = null;
-    ui.hide();
-  };
+    ui.hideTokenActions();
+  }
 });
 
 Hooks.on('updateToken', (token) => {
   if (shownToken && shownToken.document.id === token.id) {
     setTimeout(() => {
-      ui.show(shownToken);
+      ui.showTokenActions(shownToken);
     }, 1);
   }
 });
@@ -23,7 +23,7 @@ Hooks.on('updateToken', (token) => {
 Hooks.on('updateItem', (item) => {
   if (shownToken && shownToken.actor === item.parent) {
     setTimeout(() => {
-      ui.show(shownToken);
+      ui.showTokenActions(shownToken);
     }, 1);
   }
 });
@@ -31,14 +31,14 @@ Hooks.on('updateItem', (item) => {
 Hooks.on('updateActor', (actor) => {
   if (shownToken && shownToken.actor === actor) {
     setTimeout(() => {
-      ui.show(shownToken);
+      ui.showTokenActions(shownToken);
     }, 1);
   }
 });
 
 Hooks.on('renderTokenHUD', (tokenHUD) => {
   const token = tokenHUD.object;
-  if (ui.show(token)) {
+  if (ui.showTokenActions(token)) {
     shownToken = token ?? null;
   }
 });

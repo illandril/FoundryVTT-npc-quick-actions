@@ -33,6 +33,7 @@
     "activation_bonus": "Bonus Actions",
     "activation_reaction": "Reactions",
     "activation_legendary": "Legendary Actions",
+    "activation_legendaryResistance": "Legendary Resistances",
     "activation_lair": "Lair Actions",
     "activation_special": "Special Actions",
     "activation_crew": "Crew Actions",
@@ -44,6 +45,7 @@
       "cantrip": "C",
       "innate": "I",
       "atwill": "W",
+      "ritual": "R",
       "unknown": "?"
     },
     "recharge-roll": "Recharge Roll",
